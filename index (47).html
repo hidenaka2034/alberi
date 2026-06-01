@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjogIkFsYmVyaSAtIFF1YWxpdml2YSIsICJzaG9ydF9uYW1lIjogIkFsYmVyaSIsICJkZXNjcmlwdGlvbiI6ICJDZW5zaW1lbnRvIGUgZ2VzdGlvbmUgYWxiZXJpIHVyYmFuaSIsICJzdGFydF91cmwiOiAiLi8iLCAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwgImJhY2tncm91bmRfY29sb3IiOiAiI2Y0ZjFlYiIsICJ0aGVtZV9jb2xvciI6ICIjMmI1ZTNhIiwgIm9yaWVudGF0aW9uIjogInBvcnRyYWl0IiwgImljb25zIjogW3sic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbCw8c3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEwMCAxMDAnPjx0ZXh0IHk9Jy45ZW0nIGZvbnQtc2l6ZT0nOTAnPlx1ZDgzY1x1ZGYzMzwvdGV4dD48L3N2Zz4iLCAic2l6ZXMiOiAiYW55IiwgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCJ9XX0=">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2b5e3a">
+<title>&#127795; Alberi</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Playfair+Display:wght@400;600;700&display=swap"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+:root{--bg:#f4f1eb;--surface:#fff;--primary:#2b5e3a;--primary-light:#e8f0ea;
+--accent:#c75d3a;--accent-light:#fdf0ec;--text:#1e1e1e;--muted:#7a8a7e;
+--border:#e2e0da;--shadow:0 2px 16px rgba(0,0,0,.10);
+--vigor-excellent:#2a8c42;--vigor-good:#5aaa5e;--vigor-fair:#d4a030;
+--vigor-declining:#d07828;--vigor-critical:#c43030;--vigor-dead:#555;
+--need-green:#4a9b5f;--need-yellow:#d4a030;--need-red:#c43030;
+--radius:14px;--font:'DM Sans',sans-serif;--display:'Playfair Display',serif;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;min-height:100vh;overflow:hidden;font-family:var(--font);color:var(--text);background:var(--bg);}
+#map{position:fixed;top:0;left:0;right:0;bottom:0;z-index:1;width:100vw;height:100vh;}
+.top-bar{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;flex-direction:column;
+gap:5px;padding:8px 12px;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);
+border-bottom:1px solid var(--border);}
+.top-row1{display:flex;align-items:center;gap:7px;}
+.top-row2{display:flex;align-items:center;gap:6px;}
+.top-bar h1{font-family:var(--display);font-size:18px;font-weight:700;color:var(--primary);flex:1;}
+.top-bar .count{font-size:13px;color:var(--muted);font-weight:400;}
+.top-bar select{padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;
+font-family:var(--font);background:#fff;color:var(--text);max-width:120px;}
+.btn-sm{width:32px;height:32px;border-radius:50%;border:none;background:var(--primary);color:#fff;
+font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+box-shadow:0 2px 6px rgba(43,94,58,.25);}
+.fab-group{position:fixed;bottom:28px;right:16px;z-index:1400;display:flex;flex-direction:column;gap:12px;}
+.fab{width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;display:flex;
+align-items:center;justify-content:center;font-size:24px;box-shadow:var(--shadow);transition:transform .2s;}
+.fab:active{transform:scale(.92);}
+.fab-mic{background:var(--primary);color:#fff;}
+.fab-mic.listening{background:#c43030;animation:pulse 1.2s infinite;}
+.fab-cam{background:var(--surface);color:var(--primary);border:2px solid var(--primary-light);}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(196,48,48,.4)}50%{box-shadow:0 0 0 14px rgba(196,48,48,0)}}
+.sheet-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.3);
+z-index:1200;opacity:0;pointer-events:none;transition:opacity .3s;}
+.sheet-overlay.open{opacity:1;pointer-events:auto;}
+.sheet{position:fixed;left:0;right:0;bottom:-100%;z-index:1300;background:var(--surface);
+border-radius:20px 20px 0 0;transition:bottom .35s cubic-bezier(.4,0,.2,1);
+max-height:88vh;overflow-y:auto;padding-bottom:32px;box-shadow:0 -4px 30px rgba(0,0,0,.12);}
+.sheet.open{bottom:0;}
+.sheet-handle{width:40px;height:4px;background:#ccc;border-radius:2px;margin:10px auto 0;}
+.sheet-header{padding:16px 20px 12px;border-bottom:1px solid var(--border);}
+.sheet-header .species{font-family:var(--display);font-size:22px;font-weight:700;color:var(--primary);display:inline;}
+.sheet-header .common{font-size:14px;color:var(--muted);margin-top:2px;}
+.sheet-header .meta{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap;}
+.vigor-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;color:#fff;text-transform:uppercase;letter-spacing:.5px;}
+.id-badge{font-size:12px;color:var(--muted);font-family:monospace;background:var(--bg);padding:2px 8px;border-radius:6px;}
+.vigor-selector{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;}
+.vigor-opt{padding:4px 10px;border-radius:14px;font-size:11px;font-weight:600;cursor:pointer;
+border:2px solid transparent;transition:all .2s;opacity:.45;color:#fff;}
+.vigor-opt.active{opacity:1;border-color:rgba(0,0,0,.15);box-shadow:0 1px 4px rgba(0,0,0,.12);}
+.vigor-opt:hover{opacity:.75;}
+.zone-row{display:flex;gap:6px;align-items:center;margin-top:8px;}
+.zone-row select{flex:1;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:var(--font);background:#fff;}
+.zone-row button{padding:4px 8px;border:1.5px solid var(--primary);border-radius:8px;background:var(--primary-light);
+color:var(--primary);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap;}
+.water-row{display:flex;align-items:center;gap:10px;margin:14px 0 6px;padding:0 20px;}
+.water-input-wrap{display:flex;align-items:center;gap:6px;background:var(--bg);border-radius:10px;
+padding:4px 8px;border:1.5px solid var(--border);}
+.water-input-wrap input{width:50px;border:none;background:transparent;font-size:18px;font-weight:700;
+text-align:center;font-family:var(--font);color:var(--primary);outline:none;}
+.water-input-wrap span{font-size:14px;color:var(--muted);font-weight:500;}
+.water-input-wrap button{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);
+background:var(--surface);font-size:16px;cursor:pointer;display:flex;align-items:center;
+justify-content:center;color:var(--primary);font-weight:700;}
+.btn-water{flex:1;padding:12px 14px;border:none;border-radius:var(--radius);
+background:linear-gradient(135deg,#2b8adb,#1b6aaa);color:#fff;font-size:15px;font-weight:600;
+font-family:var(--font);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-water:active{transform:scale(.97);}
+.section{padding:14px 20px 0;}
+.section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;}
+/* Quick action buttons */
+.quick-actions{display:flex;flex-wrap:wrap;gap:6px;padding:0 20px 4px;}
+.qa-btn{padding:6px 10px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);
+font-size:12px;cursor:pointer;font-family:var(--font);color:var(--text);transition:all .15s;display:flex;align-items:center;gap:4px;}
+.qa-btn:active{background:var(--primary-light);border-color:var(--primary);}
+/* Needs */
+.needs-row{display:flex;flex-wrap:wrap;gap:6px;}
+.need-pill{padding:5px 12px;border-radius:16px;border:1.5px solid var(--border);background:var(--bg);
+font-size:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px;
+font-family:var(--font);color:var(--text);position:relative;}
+.need-pill.active{font-weight:600;}
+.need-pill .dot{width:8px;height:8px;border-radius:50%;transition:background .2s;}
+.need-pill .age{font-size:10px;margin-left:2px;opacity:.7;}
+/* Watering plan */
+.water-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;}
+.water-cell{background:var(--bg);border-radius:10px;padding:8px 4px;text-align:center;cursor:pointer;
+transition:background .2s;border:1.5px solid transparent;}
+.water-cell:hover{border-color:var(--primary);}
+.water-cell .month{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:.5px;}
+.water-cell .freq{font-size:16px;font-weight:700;color:var(--primary);margin:4px 0 2px;}
+.water-cell .liters{font-size:11px;color:var(--muted);}
+.water-edit{display:none;flex-direction:column;gap:6px;margin-top:10px;padding:12px;background:var(--primary-light);border-radius:var(--radius);}
+.water-edit.open{display:flex;}
+.water-edit label{font-size:12px;font-weight:600;color:var(--primary);}
+.water-edit input{width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--font);background:#fff;}
+.water-edit .row{display:flex;gap:8px;}
+.water-edit .row>div{flex:1;}
+.water-edit button{padding:8px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-weight:600;cursor:pointer;font-family:var(--font);}
+/* Interventions */
+.interv-list{display:flex;flex-direction:column;gap:6px;padding-bottom:16px;}
+.interv-item{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:var(--bg);border-radius:10px;position:relative;}
+.interv-icon{font-size:16px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:var(--surface);flex-shrink:0;}
+.interv-info{flex:1;min-width:0;}
+.interv-type{font-size:13px;font-weight:600;}
+.interv-date{font-size:11px;color:var(--muted);}
+.interv-note{font-size:12px;color:var(--muted);margin-top:2px;}
+.interv-del{position:absolute;top:6px;right:8px;width:22px;height:22px;border-radius:50%;border:none;
+background:transparent;color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.interv-del:hover{background:#fdd;color:var(--accent);}
+/* QV */
+.qv-section{margin-top:10px;padding:12px;background:var(--bg);border-radius:var(--radius);}
+.qv-section-title{font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+.qv-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;}
+.qv-row{display:flex;flex-direction:column;padding:3px 0;}
+.qv-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;}
+.qv-val{font-size:13px;font-weight:500;color:var(--text);}
+.qv-val.warn{color:var(--accent);font-weight:700;}
+.qv-val.good{color:var(--vigor-good);}
+.qv-full{grid-column:1/-1;}
+.qv-co2{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:4px;}
+.qv-co2-cell{text-align:center;padding:6px 4px;background:var(--surface);border-radius:8px;}
+.qv-co2-cell .v{font-size:15px;font-weight:700;color:var(--primary);}
+.qv-co2-cell .u{font-size:9px;color:var(--muted);}
+/* Vivaio */
+.viv-form{display:flex;flex-direction:column;gap:10px;margin-top:10px;}
+.viv-row{display:flex;gap:8px;}
+.viv-row>div{flex:1;}
+.viv-field label{font-size:11px;font-weight:600;color:var(--muted);display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px;}
+.viv-field input,.viv-field select,.viv-field textarea{width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--font);background:#fff;}
+.viv-field textarea{resize:vertical;min-height:50px;}
+.viv-save{padding:10px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-weight:600;cursor:pointer;font-family:var(--font);margin-top:4px;}
+/* Toast */
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);z-index:2000;
+background:var(--primary);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;font-weight:500;
+opacity:0;transition:all .3s;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.15);
+display:flex;align-items:center;gap:8px;max-width:92vw;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+.toast-msg{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.toast-undo{flex-shrink:0;padding:3px 10px;border:1.5px solid rgba(255,255,255,.7);border-radius:8px;
+cursor:pointer;font-weight:700;font-size:12px;background:transparent;color:#fff;}
+.toast-undo:hover{background:rgba(255,255,255,.2);}
+.voice-bar{position:fixed;bottom:96px;left:16px;right:80px;z-index:1400;background:var(--surface);
+border-radius:var(--radius);padding:10px 14px;box-shadow:var(--shadow);font-size:14px;
+color:var(--text);display:none;border:2px solid var(--primary);}
+.voice-bar.show{display:block;}
+.voice-bar .label{font-size:10px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);
+z-index:2000;display:none;align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:75vh;overflow-y:auto;}
+.modal h2{font-family:var(--display);font-size:20px;color:var(--primary);margin-bottom:16px;}
+.modal .field{margin-bottom:12px;}
+.modal .field label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;}
+.modal .field input,.modal .field select{width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:var(--font);background:#fff;}
+.modal .actions{display:flex;gap:10px;margin-top:16px;}
+.modal .actions button{flex:1;padding:12px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);}
+.modal .btn-confirm{background:var(--primary);color:#fff;}
+.modal .btn-cancel{background:var(--bg);color:var(--text);}
+.gps-btn{padding:8px 14px;border:1.5px solid var(--primary);border-radius:10px;background:var(--primary-light);
+color:var(--primary);font-weight:600;cursor:pointer;font-family:var(--font);font-size:13px;margin-top:4px;display:inline-flex;align-items:center;gap:6px;}
+.gps-btn.done{border-color:var(--vigor-good);color:var(--vigor-good);background:#e8f5e9;}
+
+/* Images section */
+.img-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.img-thumb{width:72px;height:72px;border-radius:10px;object-fit:cover;cursor:pointer;border:2px solid var(--border);transition:all .2s;}
+.img-thumb.profile{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-light);}
+.img-thumb-wrap{position:relative;}
+.img-thumb-del{position:absolute;top:-4px;right:-4px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;border:2px solid #fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.img-thumb-star{position:absolute;bottom:-4px;right:-4px;width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;border:2px solid #fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.img-full-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:2000;display:none;align-items:center;justify-content:center;cursor:pointer;}
+.img-full-overlay.open{display:flex;}
+.img-full-overlay img{max-width:95%;max-height:90vh;border-radius:8px;}
+.profile-pic{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.15);margin-right:8px;vertical-align:middle;}
+
+/* GPS & Session */
+.session-bar{position:fixed;top:80px;left:0;right:0;z-index:1000;background:linear-gradient(135deg,#2b8adb,#1b6aaa);
+color:#fff;padding:10px 16px;display:none;align-items:center;gap:10px;font-size:14px;font-weight:500;
+box-shadow:0 2px 10px rgba(0,0,0,.2);}
+.session-bar.active{display:flex;}
+.session-bar .dot{width:10px;height:10px;border-radius:50%;background:#4ade80;animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.session-bar .count{font-weight:700;font-size:16px;}
+.session-bar button{padding:6px 14px;border:2px solid rgba(255,255,255,.5);border-radius:8px;background:transparent;
+color:#fff;font-weight:600;cursor:pointer;font-family:var(--font);font-size:13px;}
+.gps-indicator{width:10px;height:10px;border-radius:50%;background:#ccc;flex-shrink:0;}
+.gps-indicator.tracking{background:#4ade80;animation:blink 1.5s infinite;}
+.verified-badge{font-size:11px;color:var(--vigor-good);display:flex;align-items:center;gap:3px;}
+
+/* Map pick mode */
+.map-pick-banner{position:fixed;top:56px;left:0;right:0;z-index:1500;
+  background:var(--primary);color:#fff;padding:12px 20px;text-align:center;
+  font-size:14px;font-weight:600;display:none;box-shadow:0 2px 10px rgba(0,0,0,.2);}
+.map-pick-banner.active{display:block;}
+.map-crosshair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:1499;pointer-events:none;font-size:32px;display:none;
+  filter:drop-shadow(0 0 4px rgba(0,0,0,.4));}
+.map-crosshair.active{display:block;}
+
+.map-pick-banner{position:fixed;top:56px;left:0;right:0;z-index:1500;
+  background:var(--primary);color:#fff;padding:12px 16px;
+  display:none;align-items:center;gap:8px;flex-wrap:wrap;
+  font-size:14px;font-weight:600;box-shadow:0 2px 10px rgba(0,0,0,.2);}
+.map-pick-banner.active{display:flex;}
+
+/* Storia */
+.storia-header{background:var(--primary-light);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;font-size:13px;line-height:1.8;}
+.storia-header strong{color:var(--primary);}
+.storia-cat{margin-bottom:14px;}
+.storia-cat-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--primary);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.storia-entry{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:8px;margin-bottom:4px;font-size:13px;}
+.storia-entry-date{color:var(--muted);font-size:11px;}
+.storia-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 6px;}
+.storia-del:hover{color:var(--accent);}
+
+/* Vivaio list panel */
+.vivaio-panel{position:fixed;top:80px;left:0;right:0;bottom:0;z-index:1100;
+  background:var(--surface);display:none;overflow-y:auto;padding:12px;}
+.vivaio-panel.open{display:block;}
+.vivaio-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);
+  border-radius:var(--radius);margin-bottom:8px;cursor:pointer;}
+.vivaio-item:hover{background:var(--primary-light);}
+.vivaio-num{width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;}
+.vivaio-info{flex:1;}
+.vivaio-info .name{font-weight:600;font-size:14px;}
+.vivaio-info .sub{font-size:12px;color:var(--muted);}
+.btn-plant{padding:6px 12px;border:none;border-radius:8px;background:var(--primary);
+  color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);}
+.empty-msg{text-align:center;color:var(--muted);font-size:13px;padding:8px 0;font-style:italic;}
+.leaflet-top.leaflet-right{top:100px !important;margin-right:4px;}
+.leaflet-container{font-family:var(--font)!important;}
+.tree-marker{transition:transform .2s ease;transform-origin:center center;cursor:pointer;}
+.tree-marker:hover{transform:scale(1.6);z-index:9999!important;}
+.leaflet-marker-icon:has(.tree-marker:hover){z-index:9999!important;}
+</style>
+</head>
+<body>
+
+
+<div id="map"></div>
+<div class="top-bar">
+  <div class="top-row1">
+    <h1>🌳 <span id="treeCount" class="count"></span></h1>
+    <button onclick="openSettings()" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--bg);color:var(--muted);font-size:16px;cursor:pointer;">⚙️</button>
+    <span class="gps-indicator" id="gpsIndicator" title="GPS"></span>
+    <button id="btnUndo" onclick="doUndo()" title="Annulla ultima azione" style="display:none;padding:0 8px;height:32px;border:1.5px solid var(--accent);border-radius:8px;background:var(--accent-light);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">↩ Annulla</button>
+    <button class="btn-sm" id="btnSession" onclick="toggleSession()" title="Sessione annaffiamento" style="background:#2b8adb;font-size:12px;width:auto;padding:0 8px;border-radius:8px;">💧▶</button>
+    <button class="btn-sm" id="btnShowVivaio" title="In vivaio" style="background:#7a5c2e;position:relative;">🌱<span id="vivaioCount" style="position:absolute;top:-4px;right:-4px;background:#c75d3a;color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:none;align-items:center;justify-content:center;">0</span></button>
+    <button class="btn-sm" id="btnAddTree" title="Aggiungi albero" style="font-size:18px;">+</button>
+  </div>
+  <div class="top-row2">
+    <select id="zoneFilter" style="flex:1;padding:5px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:var(--font);background:#fff;"><option value="">Tutte le zone</option></select>
+    <button id="btnBulkWater" style="display:none;padding:5px 12px;border:none;border-radius:8px;background:#2b8adb;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap;">💧 Annaffia zona</button>
+    <button class="btn-sm" id="btnAddZone" title="Nuova zona" style="font-size:11px;background:#e8f0ea;color:var(--primary);border:1.5px solid var(--primary);">+Zona</button>
+  </div>
+</div>
+<div class="session-bar" id="sessionBar">
+  <span class="dot"></span>
+  <span>Sessione annaffiamento</span>
+  <span class="count" id="sessionCount">0</span>
+  <span>alberi</span>
+  <span style="flex:1"></span>
+  <button onclick="endWateringSession()">⏹ Fine</button>
+</div>
+<div class="map-pick-banner" id="mapPickBanner">
+  <span id="mapPickMsg">&#128205; Tocca la mappa per posizionare</span>
+  <button id="mapPickConfirm" onclick="confirmMapPick()" style="display:none;padding:6px 14px;border:2px solid #fff;border-radius:8px;background:#fff;color:var(--primary);font-weight:700;cursor:pointer;font-family:var(--font);">&#10003; Conferma</button>
+  <button onclick="cancelMapPick()" style="padding:4px 10px;border:2px solid rgba(255,255,255,.5);border-radius:8px;background:transparent;color:#fff;font-weight:600;cursor:pointer;font-family:var(--font);">&#10005;</button>
+</div>
+<div class="fab-group">
+  <button class="fab fab-mic" id="btnMic" title="Comando vocale">🎙️</button>
+</div>
+<div class="voice-bar" id="voiceBar"><div class="label">🎙️ Ascolto...</div><div id="voiceText">...</div></div>
+<div class="vivaio-panel" id="vivaioPanel">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <h2 style="font-family:var(--display);font-size:18px;color:var(--primary);">🌱 In Vivaio</h2>
+    <button onclick="document.getElementById('vivaioPanel').classList.remove('open')" style="padding:4px 12px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);cursor:pointer;font-family:var(--font);">← Mappa</button>
+  </div>
+  <div id="vivaioList"></div>
+</div>
+<div class="sheet-overlay" id="sheetOverlay"></div>
+<div class="sheet" id="sheet">
+  <div onclick="closeSheet()" style="width:100%;padding:12px 20px 8px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;border-bottom:1px solid var(--border);background:var(--bg);">
+    <span style="font-size:13px;color:var(--muted);">← Mappa</span>
+    <div style="width:40px;height:4px;background:#ccc;border-radius:2px;"></div>
+    <span style="font-size:18px;color:var(--muted);">✕</span>
+  </div>
+  <div class="sheet-header" id="sheetHeader"></div>
+  <div id="sectionVigor" class="section"></div>
+  <div id="sectionZone" class="section"></div>
+  <div class="section" id="sectionAzioni"><div class="section-title">Azioni</div><div id="azioniContent"></div></div>
+  <div class="section" id="sectionNecessita"><div class="section-title">Necessità</div><div class="needs-row" id="needsRow"></div></div>
+  <div class="section" id="sectionPianoAcqua"><div class="section-title">Piano Annaffiature · Mag–Ott</div>
+    <div class="water-grid" id="waterGrid"></div><div class="water-edit" id="waterEdit"></div></div>
+  <div class="section" id="sectionUltimiInterventi"><div class="section-title">Ultimi Interventi <span id="intervCount" style="font-weight:400;opacity:.6;"></span></div><div class="interv-list" id="intervList"></div></div>
+  <div class="section" id="sectionImages">
+    <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>Immagini <span id="imgCount" style="font-weight:400;opacity:.6;"></span></span>
+      <label style="padding:4px 12px;border:1.5px solid var(--primary);border-radius:8px;background:var(--primary-light);color:var(--primary);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">
+        📷 Aggiungi
+        <input type="file" accept="image/*" style="display:none" onchange="handleSheetPhoto(this)"/>
+      </label>
+    </div>
+    <div class="img-grid" id="imgGrid"></div>
+  </div>
+  <div class="section" id="sectionQV" style="display:none"><div class="section-title" style="cursor:pointer" id="qvToggle">▶ Qualiviva</div><div id="qvContent" style="display:none"></div></div>
+  <div class="section" id="sectionVivaio"><div class="section-title" style="cursor:pointer" id="vivaioToggle">▶ Vivaio</div><div id="vivaioContent" style="display:none"></div></div>
+  <div class="section" id="sectionStoria"><div class="section-title" style="cursor:pointer" id="storiaToggle">▶ Storia</div><div id="storiaContent" style="display:none"></div></div>
+  <div class="section" style="padding-bottom:20px;margin-top:12px;"><button onclick="confirmDeleteTree()" style="width:100%;padding:12px;border:1.5px solid var(--accent);border-radius:var(--radius);background:var(--accent-light);color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);">🗑️ Elimina albero</button></div>
+</div>
+
+<div class="modal-overlay" id="modalAdd">
+  <div class="modal">
+    <h2 id="modalAddTitle">Nuovo Albero</h2>
+    <div class="field"><label>Specie (nome scientifico)</label>
+      <input id="fSpecies" placeholder="Digita per cercare..." autocomplete="off" oninput="filterSpecies(this.value)" onfocus="filterSpecies(this.value)"/>
+      <div id="speciesList" style="max-height:150px;overflow-y:auto;border:1.5px solid var(--border);border-radius:10px;background:#fff;display:none;margin-top:4px;"></div></div>
+    <div class="field"><label>Nome comune</label><input id="fCommon" placeholder="es. Leccio"/></div>
+    <div style="display:flex;align-items:center;gap:8px;margin:8px 0;padding:10px;background:var(--primary-light);border-radius:10px;">
+      <input type="checkbox" id="fSoloSemina" style="width:18px;height:18px;cursor:pointer;" onchange="toggleSeminaMode()"/>
+      <label for="fSoloSemina" style="font-size:13px;font-weight:600;color:var(--primary);cursor:pointer;">🌱 Solo semina — non ancora a dimora</label>
+    </div>
+    <!-- Sezione albero normale -->
+    <div id="fNormaleSection">
+      <div class="field"><label>Posizione / note</label><input id="fLocation" placeholder="es. Viale nord, pos. 5"/></div>
+      <div class="field"><label>Zona</label><select id="fZone"><option value="">-- nessuna --</option></select></div>
+      <div class="field"><label>Vigore</label>
+        <select id="fVigor"><option value="excellent">Ottimo</option><option value="good" selected>Buono</option>
+          <option value="fair">Discreto</option><option value="declining">In declino</option>
+          <option value="critical">Critico</option><option value="dead">Morto</option></select></div>
+      <div id="fGpsSection">
+      <div class="field"><label>Posizione GPS</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="gps-btn" id="btnGpsAdd" type="button">📍 Usa la mia posizione</button>
+        <button class="gps-btn" id="btnMapPick" type="button" onclick="startMapPick()">🗺️ Scegli sulla mappa</button>
+        </div>
+        <span id="gpsStatus" style="font-size:12px;color:var(--muted);margin-left:8px;"></span></div>
+      </div>
+    </div>
+    <!-- Sezione vivaio inline -->
+    <div id="fSeminaSection" style="display:none;">
+      <div style="padding:8px 0;font-size:13px;color:var(--muted);">📍 Zona: <strong style="color:var(--primary);">Vivaio</strong> (assegnata automaticamente)</div>
+      <div style="background:var(--primary-light);border-radius:var(--radius);padding:12px;margin-top:8px;">
+        <div style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">🌱 Dati Vivaio</div>
+        <div class="viv-row"><div class="viv-field"><label>Data semina</label><input id="fVivData" type="date"/></div>
+          <div class="viv-field"><label>N° semi</label><input id="fVivSemi" type="number" placeholder="0"/></div></div>
+        <div class="viv-row"><div class="viv-field"><label>N° piantine nate</label><input id="fVivPiantine" type="number" placeholder="0"/></div>
+          <div class="viv-field"><label>Ubicazione</label><select id="fVivUbicazione"><option value="">-- seleziona --</option>
+            <option>semenzaio</option><option>vasetto</option><option>vaso medio quadrato</option><option>vaso lungo</option></select></div></div>
+        <div class="viv-row"><div class="viv-field"><label>Trattamento seme</label><select id="fVivTrattamento">
+            <option>nessuno</option><option>lavaggio</option><option>scarificatura</option></select></div>
+          <div class="viv-field"><label>Conservazione</label><select id="fVivConservazione">
+            <option>frigo</option><option>dimora appena raccolto</option></select></div></div>
+        <div class="viv-field"><label>Provenienza seme</label><input id="fVivProvenienza" placeholder="es. raccolta propria"/></div>
+        <div class="viv-field"><label>Note semina</label><textarea id="fVivNote" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--font);resize:vertical;min-height:50px;background:#fff;"></textarea></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+          <input type="checkbox" id="fVivAcquistata" style="width:16px;height:16px;" onchange="document.getElementById('fVivAcquistoDiv').style.display=this.checked?'block':'none'"/>
+          <label for="fVivAcquistata" style="font-size:13px;font-weight:600;color:var(--primary);cursor:pointer;">🛒 Pianta acquistata</label>
+        </div>
+        <div id="fVivAcquistoDiv" style="display:none;margin-top:8px;">
+          <div class="viv-field"><label>Vivaio di provenienza</label><input id="fVivProvVivaio" placeholder="es. Vivaio Rossi"/></div>
+          <div class="viv-row"><div class="viv-field"><label>Data acquisto</label><input id="fVivDataAcq" type="date"/></div>
+            <div class="viv-field"><label>Prezzo (€)</label><input id="fVivPrezzo" type="number" step="0.01" placeholder="0.00"/></div></div>
+          <div class="viv-field"><label>Note acquisto</label><textarea id="fVivNoteAcq" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--font);resize:vertical;min-height:40px;background:#fff;"></textarea></div>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn-cancel" id="btnCancelAdd">Annulla</button>
+      <button class="btn-confirm" id="btnConfirmAdd">Salva</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modalZone">
+  <div class="modal">
+    <h2>Nuova Zona</h2>
+    <div class="field"><label>Nome zona</label><input id="fZoneName" placeholder="es. Giardino Nord"/></div>
+    <div class="actions">
+      <button class="btn-cancel" onclick="document.getElementById('modalZone').classList.remove('open')">Annulla</button>
+      <button class="btn-confirm" onclick="addZone()">Crea</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modalBulkWater">
+  <div class="modal">
+    <h2>💧 Annaffia Zona</h2>
+    <p id="bulkWaterInfo" style="font-size:14px;color:var(--muted);margin-bottom:14px;"></p>
+    <div class="field"><label>Litri per albero</label>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button onclick="document.getElementById('bulkLiters').value=Math.max(1,parseInt(document.getElementById('bulkLiters').value||5)-1)" style="width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);font-size:18px;cursor:pointer;">−</button>
+        <input id="bulkLiters" type="number" value="5" min="1" max="999" style="width:70px;text-align:center;font-size:20px;font-weight:700;"/>
+        <button onclick="document.getElementById('bulkLiters').value=parseInt(document.getElementById('bulkLiters').value||5)+1" style="width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);font-size:18px;cursor:pointer;">+</button>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn-cancel" onclick="document.getElementById('modalBulkWater').classList.remove('open')">Annulla</button>
+      <button class="btn-confirm" style="background:#2b8adb" onclick="doBulkWater()">💧 Annaffia tutti</button>
+    </div>
+  </div>
+</div>
+<div class="img-full-overlay" id="imgFullOverlay" onclick="this.classList.remove('open')"><img id="imgFullSrc"/></div>
+<div class="toast" id="toast"><span class="toast-msg" id="toastMsg"></span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function(){
+
+const QV_DB = {"acacia dealbata": {"specie": "Acacia dealbata", "fogliame": "Sempreverde", "origine": "Esotica – Australia sud-orientale", "invasiva": "Non invasiva (eccetto Liguria)", "forma_chioma": "Arrotondata", "crescita_cm": "60-80", "altezza_m": "5-10", "suolo": "Sabbioso o franco", "ph": "5-7.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-10", "trapiantabilita": "Scarsa", "siccita": "Medio alta", "salinita": "Media", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Media", "voc_classe": "Monoterpeni", "voc_quantita": "Alta", "co2_nuovo_stoccata": "5", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "408", "co2_maturo_assim": "87", "o3": "<0.05", "no2": "<0.05", "so2": "<0.05", "pm10": "<0.05", "nome_comune": "Mimosa"}, "acer campestre": {"specie": "Acer campestre", "fogliame": "Decidua", "origine": "Autoctona", "invasiva": "Non invasiva", "forma_chioma": "Piramidale o ovale", "crescita_cm": "25-35", "altezza_m": "7-10", "suolo": "Nessuna esigenza particolare", "ph": "5.5-8", "esposizione": "Pieno sole e mezzombra", "temp_min": "-25", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Media", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "Isoprene", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "3", "co2_maturo_stoccata": "499", "co2_maturo_assim": "120", "o3": "0.1", "no2": "<0.05", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Acero campestre"}, "acer monspessulanum": {"specie": "Acer monspessulanum", "fogliame": "Decidua", "origine": "Autoctona – bacino del Mediterraneo ed Europa meridionale, diffusa in Italia centro-meridionale", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata o espansa", "crescita_cm": "20-30", "altezza_m": "3-8", "suolo": "Calcareo, franco o sabbioso, ben drenato", "ph": "6.5-8.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-20", "trapiantabilita": "Buona", "siccita": "Alta", "salinita": "Bassa", "compattazione": "Media", "sommersione": "Bassa", "inquinanti": "Media", "voc_classe": "Isoprene", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "1", "co2_nuovo_assim": "2", "co2_maturo_stoccata": "65", "co2_maturo_assim": "14", "o3": "0.2", "no2": "<0.05", "so2": "<0.05", "pm10": "0.05", "nome_comune": "Acero di Montpellier"}, "acer negundo": {"specie": "Acer negundo", "fogliame": "Decidua", "origine": "Esotica – Nord America", "invasiva": "INVASIVA", "forma_chioma": "Arrotondata o espansa", "crescita_cm": "90-120", "altezza_m": "9-15", "suolo": "Nessuna esigenza particolare", "ph": "6-8", "esposizione": "Pieno sole e mezzombra", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Media", "salinita": "Media", "compattazione": "Medio alta", "sommersione": "Alta", "inquinanti": "Alta", "voc_classe": "Monoterpeni", "voc_quantita": "Alta", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "3", "co2_maturo_stoccata": "499", "co2_maturo_assim": "120", "o3": "<0.05", "no2": "0.1", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Acero americano"}, "acer platanoides": {"specie": "Acer platanoides", "fogliame": "Decidua", "origine": "Autoctona – regioni centro-settentrionali", "invasiva": "Non invasiva", "forma_chioma": "Espansa irregolare", "crescita_cm": "35-45", "altezza_m": "15-20", "suolo": "Nessuna esigenza particolare", "ph": "5.5-8", "esposizione": "Pieno sole e mezz'ombra", "temp_min": "-40", "trapiantabilita": "Buona", "siccita": "Media", "salinita": "Media", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Media", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Bassa+media", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "7", "co2_maturo_stoccata": "1644", "co2_maturo_assim": "189", "o3": "0.2", "no2": "0.9", "so2": "0.1", "pm10": "0.1", "nome_comune": "Acero riccio"}, "acer pseudoplatanus": {"specie": "Acer pseudoplatanus", "fogliame": "Decidua", "origine": "Autoctona – regioni centro-settentrionali", "invasiva": "Non invasiva", "forma_chioma": "Espansa irregolare", "crescita_cm": "50-70", "altezza_m": "12-18", "suolo": "Nessuna esigenza, ben drenato", "ph": "5.5-8", "esposizione": "Mezzombra e ombra", "temp_min": "-20", "trapiantabilita": "Media", "siccita": "Bassa", "salinita": "Media", "compattazione": "Bassa", "sommersione": "Media", "inquinanti": "Media", "voc_classe": "Isoprene", "voc_quantita": "Media", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "1644", "co2_maturo_assim": "215", "o3": "0.2", "no2": "0.5", "so2": "0.2", "pm10": "0.1", "nome_comune": "Acero montano"}, "acer rubrum": {"specie": "Acer rubrum", "fogliame": "Decidua", "origine": "Esotica – Nord America", "invasiva": "Non invasiva", "forma_chioma": "Piramidale (giovane), arrotondata (maturo)", "crescita_cm": "50-60", "altezza_m": "12-18", "suolo": "Nessuna esigenza particolare", "ph": "4.5-7.5", "esposizione": "Mezzombra e ombra", "temp_min": "-20", "trapiantabilita": "Media", "siccita": "Molto bassa", "salinita": "Molto bassa", "compattazione": "Medio alta", "sommersione": "Alta", "inquinanti": "No", "voc_classe": "Monoterpeni", "voc_quantita": "Alta", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "8", "co2_maturo_stoccata": "1644", "co2_maturo_assim": "211", "o3": "0.1", "no2": "0.1", "so2": "0.2", "pm10": "0.1", "nome_comune": "Acero rosso"}, "acer saccharinum": {"specie": "Acer saccharinum", "fogliame": "Decidua", "origine": "Esotica – Nord America", "invasiva": "Non invasiva", "forma_chioma": "Espansa irregolare", "crescita_cm": "60-80", "altezza_m": "15-21", "suolo": "Nessuna esigenza; adatta a suoli poveri", "ph": "4.5-7", "esposizione": "Pieno sole e mezzombra", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Media", "salinita": "Media", "compattazione": "Alta", "sommersione": "Medio alta", "inquinanti": "Alta", "voc_classe": "Monoterpeni", "voc_quantita": "Media", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "7", "co2_maturo_stoccata": "1644", "co2_maturo_assim": "238", "o3": "0.1", "no2": "0.1", "so2": "0.3", "pm10": "0.1", "nome_comune": "Acero argenteo"}, "aesculus hippocastanum": {"specie": "Aesculus hippocastanum", "fogliame": "Decidua", "origine": "Naturalizzata – Grecia e Balcani", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "50-70", "altezza_m": "15-23", "suolo": "Nessuna esigenza particolare", "ph": "5.5-8", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Media", "siccita": "Bassa", "salinita": "Media", "compattazione": "Media", "sommersione": "Bassa", "inquinanti": "Media", "voc_classe": "Monoterpeni", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "3730", "co2_maturo_assim": "325", "o3": "0.1", "no2": "0.2", "so2": "0.3", "pm10": "0.1", "nome_comune": "Ippocastano"}, "aesculus x carnea": {"specie": "Aesculus x carnea", "fogliame": "Decidua", "origine": "Naturalizzata – ibrido A. pavia x A. hippocastanum", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "40", "altezza_m": "9-18", "suolo": "Nessuna esigenza particolare", "ph": "6-8.5", "esposizione": "Pieno sole", "temp_min": "-20", "trapiantabilita": "Media", "siccita": "Media", "salinita": "Media", "compattazione": "Media", "sommersione": "Bassa", "inquinanti": "Media", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "3", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "2157", "co2_maturo_assim": "188", "o3": "0.2", "no2": "0.4", "so2": "0.1", "pm10": "0.1", "nome_comune": "Ippocastano rosso"}, "ailanthus altissima": {"specie": "Ailanthus altissima", "fogliame": "Decidua", "origine": "Esotica – Cina e Taiwan", "invasiva": "INVASIVA", "forma_chioma": "Espansa irregolare", "crescita_cm": "90-150", "altezza_m": "12-18", "suolo": "Nessuna esigenza particolare", "ph": "5.5-8.5", "esposizione": "Qualsiasi", "temp_min": "-20", "trapiantabilita": "Buona", "siccita": "Alta", "salinita": "Alta", "compattazione": "Medio alta", "sommersione": "Medio alta", "inquinanti": "Alta", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "1631", "co2_maturo_assim": "219", "o3": "0.1", "no2": "0.1", "so2": "0.1", "pm10": "0.1", "nome_comune": "Ailanto"}, "albizzia julibrissin": {"specie": "Albizzia julibrissin", "fogliame": "Decidua", "origine": "Esotica – Iran, Cina, Corea", "invasiva": "Non invasiva", "forma_chioma": "Espansa appiattita", "crescita_cm": "50-70", "altezza_m": "4-10", "suolo": "Nessuna esigenza particolare", "ph": "5-8.5", "esposizione": "Pieno sole", "temp_min": "-10", "trapiantabilita": "Media", "siccita": "Alta", "salinita": "Medio alta", "compattazione": "Bassa", "sommersione": "Molto bassa", "inquinanti": "Media", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Media+media", "co2_nuovo_stoccata": "5", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "599", "co2_maturo_assim": "77", "o3": "<0.05", "no2": "<0.05", "so2": "<0.05", "pm10": "0.1", "nome_comune": "Albero della seta"}, "araucaria araucana": {"specie": "Araucaria araucana", "fogliame": "Sempreverde", "origine": "Esotica – Cile e Argentina", "invasiva": "Non invasiva", "forma_chioma": "Piramidale", "crescita_cm": "40-60", "altezza_m": "15-24", "suolo": "Nessuna esigenza; umido, fresco e drenato", "ph": "5-7.5", "esposizione": "Pieno sole", "temp_min": "-20", "trapiantabilita": "Scarsa", "siccita": "Bassa", "salinita": "Media", "compattazione": "Media", "sommersione": "Molto bassa", "inquinanti": "No", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "2", "co2_nuovo_assim": "2", "co2_maturo_stoccata": "1149", "co2_maturo_assim": "165", "o3": "0.2", "no2": "0.2", "so2": "0.2", "pm10": "0.1", "nome_comune": "Araucaria"}, "arbutus unedo": {"specie": "Arbutus unedo", "fogliame": "Sempreverde", "origine": "Autoctona – macchia mediterranea, diffusa in Italia tirrenica, insulare e coste adriatiche", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata irregolare", "crescita_cm": "20-30", "altezza_m": "3-8", "suolo": "Siliceo, acido, ben drenato; intollerante al calcare attivo", "ph": "4.5-6.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-10", "trapiantabilita": "Difficile", "siccita": "Alta", "salinita": "Media", "compattazione": "Bassa", "sommersione": "Molto bassa", "inquinanti": "Bassa", "voc_classe": "Monoterpeni", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "2", "co2_nuovo_assim": "2", "co2_maturo_stoccata": "85", "co2_maturo_assim": "18", "o3": "0.1", "no2": "<0.05", "so2": "<0.05", "pm10": "0.05", "nome_comune": "Corbezzolo"}, "bauhinia purpurea": {"specie": "Bauhinia purpurea", "fogliame": "Decidua", "origine": "Esotica – Cina del Sud, India, Asia sud-orientale", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "veloce", "altezza_m": "3-5", "suolo": "Sabbioso o franco, ben drenato", "ph": "6-8", "esposizione": "Pieno sole e mezzombra", "temp_min": "-10", "trapiantabilita": "Scarsa", "siccita": "Medio alta", "salinita": "Media", "compattazione": "Bassa", "sommersione": "Bassa", "inquinanti": "Media", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Alta+media", "co2_nuovo_stoccata": "1", "co2_nuovo_assim": "1", "co2_maturo_stoccata": "19", "co2_maturo_assim": "10", "o3": "<0.05", "no2": "<0.05", "so2": "<0.05", "pm10": "<0.05", "nome_comune": "Bauhinia"}, "betula nigra": {"specie": "Betula nigra", "fogliame": "Decidua", "origine": "Esotica – Nord America", "invasiva": "Non invasiva", "forma_chioma": "Piramidale (giovane), ovale irregolare (maturo)", "crescita_cm": "40-50", "altezza_m": "12-18", "suolo": "Sabbioso o franco", "ph": "4.5-6.5", "esposizione": "Pieno sole", "temp_min": "-40", "trapiantabilita": "Media", "siccita": "Bassa", "salinita": "Bassa", "compattazione": "Medio alta", "sommersione": "Alta", "inquinanti": "Media", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "1644", "co2_maturo_assim": "358", "o3": "0.1", "no2": "0.1", "so2": "0.1", "pm10": "0.2", "nome_comune": "Betulla nera"}, "betula papyrifera": {"specie": "Betula papyrifera", "fogliame": "Decidua", "origine": "Esotica – Nord America", "invasiva": "Non invasiva", "forma_chioma": "Piramidale (giovane), ovale irregolare (maturo)", "crescita_cm": "40-50", "altezza_m": "15-21", "suolo": "Sabbioso, franco, franco limoso", "ph": "4.5-7.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-40", "trapiantabilita": "Media", "siccita": "Bassa", "salinita": "Bassa", "compattazione": "Bassa", "sommersione": "Media", "inquinanti": "Media", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "3606", "co2_maturo_assim": "599", "o3": "0.1", "no2": "0.1", "so2": "0.1", "pm10": "0.3", "nome_comune": "Betulla cartacea"}, "betula pendula": {"specie": "Betula pendula", "fogliame": "Decidua", "origine": "Autoctona – Europa centro-settentrionale", "invasiva": "Non invasiva", "forma_chioma": "Piramidale (giovane), ovale irregolare (maturo)", "crescita_cm": "30-40", "altezza_m": "12-15", "suolo": "Sabbioso o franco", "ph": "4.5-7.5", "esposizione": "Pieno sole", "temp_min": "-40", "trapiantabilita": "Media", "siccita": "Bassa", "salinita": "Bassa", "compattazione": "Bassa", "sommersione": "Media", "inquinanti": "Media", "voc_classe": "Monoterpeni", "voc_quantita": "Media", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "1644", "co2_maturo_assim": "358", "o3": "0.1", "no2": "0.1", "so2": "0.2", "pm10": "0.1", "nome_comune": "Betulla"}, "brachychiton populneus": {"specie": "Brachychiton populneus", "fogliame": "Sempreverde", "origine": "Esotica – est Australia", "invasiva": "Non invasiva", "forma_chioma": "Ovale", "crescita_cm": "30-50", "altezza_m": "10-20", "suolo": "Sabbioso o franco", "ph": "6-7.5", "esposizione": "Pieno sole", "temp_min": "-5", "trapiantabilita": "Media", "siccita": "Alta", "salinita": "Media", "compattazione": "Bassa", "sommersione": "Molto bassa", "inquinanti": "No", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "1", "co2_nuovo_assim": "1", "co2_maturo_stoccata": "513", "co2_maturo_assim": "37", "o3": "0.2", "no2": "0.1", "so2": "0.1", "pm10": "0.1", "nome_comune": "Brachichiton"}, "carpinus betulus": {"specie": "Carpinus betulus", "fogliame": "Decidua", "origine": "Autoctona – tutta Europa", "invasiva": "Non invasiva", "forma_chioma": "Piramidale (giovane), arrotondata (maturo)", "crescita_cm": "30-40", "altezza_m": "12-18", "suolo": "Nessuna esigenza particolare", "ph": "4.5-8", "esposizione": "Pieno sole, mezzombra e ombra", "temp_min": "-30", "trapiantabilita": "Media", "siccita": "Media", "salinita": "Media", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "Monoterpeni", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "1644", "co2_maturo_assim": "358", "o3": "0.1", "no2": "0.1", "so2": "0.2", "pm10": "0.1", "nome_comune": "Carpino bianco"}, "carpinus orientalis": {"specie": "Carpinus orientalis", "fogliame": "Decidua", "origine": "Autoctona – Europa meridionale e orientale, diffusa in Italia centro-meridionale e Balcani", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata o ovale", "crescita_cm": "20-30", "altezza_m": "5-10", "suolo": "Calcareo o argilloso, anche compatto", "ph": "6.5-8.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-20", "trapiantabilita": "Buona", "siccita": "Media", "salinita": "Bassa", "compattazione": "Media", "sommersione": "Bassa", "inquinanti": "Media", "voc_classe": "Non emittente", "voc_quantita": "Molto bassa", "co2_nuovo_stoccata": "1", "co2_nuovo_assim": "2", "co2_maturo_stoccata": "82", "co2_maturo_assim": "20", "o3": "0.1", "no2": "<0.05", "so2": "<0.05", "pm10": "0.1", "nome_comune": "Carpino orientale"}, "carya illinoensis": {"specie": "Carya illinoensis", "fogliame": "Decidua", "origine": "Esotica – Nord America", "invasiva": "Non invasiva", "forma_chioma": "Ovale", "crescita_cm": "40-50", "altezza_m": "22-30", "suolo": "Nessuna esigenza particolare", "ph": "4.5-7.5", "esposizione": "Nessuna esigenza particolare", "temp_min": "-10", "trapiantabilita": "Scarsa", "siccita": "Media", "salinita": "Media", "compattazione": "Media", "sommersione": "Media", "inquinanti": "Media", "voc_classe": "Monoterpeni", "voc_quantita": "Media", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "6918", "co2_maturo_assim": "436", "o3": "0.2", "no2": "0.4", "so2": "0.3", "pm10": "0.2", "nome_comune": "Pecan"}, "catalpa bignonioides": {"specie": "Catalpa bignonioides", "fogliame": "Decidua", "origine": "Esotica – Nord America", "invasiva": "Non invasiva", "forma_chioma": "Espansa irregolare", "crescita_cm": "50-60", "altezza_m": "12-18", "suolo": "Nessuna esigenza particolare", "ph": "5.5-8", "esposizione": "Pieno sole e mezzombra", "temp_min": "-15", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "Monoterpeni", "voc_quantita": "Media", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "1644", "co2_maturo_assim": "358", "o3": "0.1", "no2": "0.1", "so2": "0.2", "pm10": "0.1", "nome_comune": "Catalpa"}, "celtis australis": {"specie": "Celtis australis", "fogliame": "Decidua", "origine": "Autoctona – Europa meridionale e Italia", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "60", "altezza_m": "15-21", "suolo": "Nessuna esigenza particolare", "ph": "6-8", "esposizione": "Pieno sole, mezzombra e ombra", "temp_min": "-20", "trapiantabilita": "Media", "siccita": "Alta", "salinita": "Alta", "compattazione": "Alta", "sommersione": "Medio alta", "inquinanti": "Alta", "voc_classe": "Monoterpeni", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "3730", "co2_maturo_assim": "325", "o3": "0.1", "no2": "0.2", "so2": "0.3", "pm10": "0.1", "nome_comune": "Bagolaro"}, "ceratonia siliqua": {"specie": "Ceratonia siliqua", "fogliame": "Sempreverde", "origine": "Autoctona – bacino Mediterraneo e Italia meridionale", "invasiva": "Non invasiva", "forma_chioma": "Espansa", "crescita_cm": "25-50", "altezza_m": "8-15", "suolo": "Sabbioso o franco, anche calcareo", "ph": "6-8.5", "esposizione": "Pieno sole", "temp_min": "-5", "trapiantabilita": "Scarsa", "siccita": "Alta", "salinita": "Alta", "compattazione": "Bassa", "sommersione": "Molto bassa", "inquinanti": "Media", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Media+media", "co2_nuovo_stoccata": "3", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "256", "co2_maturo_assim": "48", "o3": "0.1", "no2": "0.1", "so2": "<0.05", "pm10": "0.1", "nome_comune": "Carrubo"}, "cercidiphyllum japonicum": {"specie": "Cercidiphyllum japonicum", "fogliame": "Decidua", "origine": "Esotica – Cina e Giappone", "invasiva": "Non invasiva", "forma_chioma": "Espansa", "crescita_cm": "40-50", "altezza_m": "10-15", "suolo": "Sabbioso o franco", "ph": "5.5-7.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-25", "trapiantabilita": "Scarsa", "siccita": "Molto bassa", "salinita": "Molto bassa", "compattazione": "Media", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Bassa+bassa", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "1631", "co2_maturo_assim": "219", "o3": "0.1", "no2": "0.1", "so2": "0.2", "pm10": "0.1", "nome_comune": "Cercidfillo"}, "cercis siliquastrum": {"specie": "Cercis siliquastrum", "fogliame": "Decidua", "origine": "Autoctona – bacino del Mediterraneo", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "25-30", "altezza_m": "6-12", "suolo": "Nessuna esigenza particolare", "ph": "5-8", "esposizione": "Pieno sole e mezzombra", "temp_min": "-15", "trapiantabilita": "Media", "siccita": "Alta", "salinita": "Alta", "compattazione": "Bassa", "sommersione": "Molto bassa", "inquinanti": "Media", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "2", "co2_nuovo_assim": "2", "co2_maturo_stoccata": "140", "co2_maturo_assim": "18", "o3": "0.1", "no2": "<0.05", "so2": "<0.05", "pm10": "<0.05", "nome_comune": "Albero di Giuda"}, "chamaecyparis lawsoniana": {"specie": "Chamaecyparis lawsoniana", "fogliame": "Sempreverde", "origine": "Esotica – Nord America", "invasiva": "Non invasiva", "forma_chioma": "Piramidale o fastigiata", "crescita_cm": "30-50", "altezza_m": "12-18", "suolo": "Sabbioso o franco, non calcareo", "ph": "5-7", "esposizione": "Pieno sole", "temp_min": "-25", "trapiantabilita": "Media", "siccita": "Media", "salinita": "Media", "compattazione": "Media", "sommersione": "Alta", "inquinanti": "Media", "voc_classe": "Monoterpeni", "voc_quantita": "Media", "co2_nuovo_stoccata": "2", "co2_nuovo_assim": "2", "co2_maturo_stoccata": "849", "co2_maturo_assim": "165", "o3": "0.2", "no2": "0.2", "so2": "0.2", "pm10": "0.1", "nome_comune": "Cipresso di Lawson"}, "chorisia speciosa": {"specie": "Chorisia speciosa", "fogliame": "Decidua", "origine": "Esotica – Sud America", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "30-50", "altezza_m": "10-15", "suolo": "Sabbioso o franco", "ph": "6-7.5", "esposizione": "Pieno sole", "temp_min": "-5", "trapiantabilita": "Media (bassa in esemplari maturi)", "siccita": "Alta", "salinita": "Media", "compattazione": "Bassa", "sommersione": "Media", "inquinanti": "No", "voc_classe": "Monoterpeni", "voc_quantita": "Media", "co2_nuovo_stoccata": "1", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "512", "co2_maturo_assim": "94", "o3": "0.2", "no2": "0.1", "so2": "<0.05", "pm10": "0.1", "nome_comune": "Albero delle bombole"}, "cinnamomum camphora": {"specie": "Cinnamomum camphora", "fogliame": "Sempreverde", "origine": "Esotica – Asia orientale", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "60", "altezza_m": "12-18", "suolo": "Nessuna esigenza particolare", "ph": "4.5-8", "esposizione": "Pieno sole e mezzombra", "temp_min": "-10", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Bassa", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "3", "co2_nuovo_assim": "3", "co2_maturo_stoccata": "1007", "co2_maturo_assim": "133", "o3": "0.4", "no2": "0.2", "so2": "<0.05", "pm10": "0.2", "nome_comune": "Canfora"}, "citrus aurantium": {"specie": "Citrus aurantium", "fogliame": "Sempreverde", "origine": "Esotica – Asia sud-orientale", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "10-30", "altezza_m": "3-9", "suolo": "Sabbioso o franco", "ph": "5-8.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-5", "trapiantabilita": "Media", "siccita": "Alta", "salinita": "Bassa", "compattazione": "Media", "sommersione": "Bassa", "inquinanti": "Media", "voc_classe": "Monoterpeni", "voc_quantita": "Media/alta", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "80", "co2_maturo_assim": "26", "o3": "<0.05", "no2": "<0.05", "so2": "<0.05", "pm10": "<0.05", "nome_comune": "Arancio amaro"}, "citrus reticulata": {"specie": "Citrus reticulata", "fogliame": "Sempreverde", "origine": "Esotica – Cina e Giappone", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "10-30", "altezza_m": "3-8", "suolo": "Nessuna esigenza particolare", "ph": "5-8.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-5", "trapiantabilita": "Media", "siccita": "Medio alta", "salinita": "Bassa", "compattazione": "Media", "sommersione": "Media", "inquinanti": "No", "voc_classe": "Monoterpeni", "voc_quantita": "Media/alta", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "80", "co2_maturo_assim": "26", "o3": "<0.05", "no2": "<0.05", "so2": "<0.05", "pm10": "<0.05", "nome_comune": "Mandarino"}, "corylus avellana": {"specie": "Corylus avellana", "fogliame": "Decidua", "origine": "Autoctona – ampiamente diffusa in tutta Europa", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata, arbustiva, ramificata fin dalla base e policormica", "crescita_cm": "40-50", "altezza_m": "4-6", "suolo": "Nessuna esigenza particolare", "ph": "6-8.5", "esposizione": "Qualsiasi", "temp_min": "-25", "trapiantabilita": "Media", "siccita": "Media", "salinita": "Bassa", "compattazione": "Media", "sommersione": "Media", "inquinanti": "Media", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Bassa+bassa", "co2_nuovo_stoccata": "4", "co2_nuovo_assim": "7", "co2_maturo_stoccata": "486", "co2_maturo_assim": "76", "o3": "0.1", "no2": "0.1", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Nocciolo"}, "corylus colurna": {"specie": "Corylus colurna", "fogliame": "Decidua", "origine": "Esotica – Turchia e Asia minore", "invasiva": "Non invasiva", "forma_chioma": "Piramidale espansa", "crescita_cm": "30-50", "altezza_m": "12-18", "suolo": "Nessuna esigenza particolare", "ph": "5.5-8.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-35", "trapiantabilita": "Scarsa", "siccita": "Bassa", "salinita": "Bassa", "compattazione": "Media", "sommersione": "Bassa", "inquinanti": "Alta", "voc_classe": "Non disponibile", "voc_quantita": "Non disponibile", "co2_nuovo_stoccata": "2", "co2_nuovo_assim": "22", "co2_maturo_stoccata": "973", "co2_maturo_assim": "243", "o3": "0.3", "no2": "0.6", "so2": "0.3", "pm10": "0.1", "nome_comune": "Nocciolo di Turchia"}, "cryptomeria japonica": {"specie": "Cryptomeria japonica", "fogliame": "Sempreverde", "origine": "Esotica – Giappone", "invasiva": "Non invasiva", "forma_chioma": "Piramidale o fastigiata", "crescita_cm": "40-55", "altezza_m": "12-15", "suolo": "Franco sabbioso, franco o argilloso", "ph": "5.5-7", "esposizione": "Pieno sole e mezzombra", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Media", "salinita": "Media", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "Monoterpeni", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "2", "co2_nuovo_assim": "2", "co2_maturo_stoccata": "1149", "co2_maturo_assim": "165", "o3": "0.2", "no2": "0.2", "so2": "0.2", "pm10": "0.1", "nome_comune": "Cedro del Giappone"}, "cupressus sempervirens": {"specie": "Cupressus sempervirens", "fogliame": "Sempreverde", "origine": "Naturalizzata – regioni orientali del Mediterraneo", "invasiva": "Non invasiva", "forma_chioma": "Fastigiata", "crescita_cm": "30-60", "altezza_m": "6-12", "suolo": "Nessuna esigenza particolare", "ph": "6-8.5", "esposizione": "Pieno sole", "temp_min": "-10", "trapiantabilita": "Media", "siccita": "Alta", "salinita": "Medio alta", "compattazione": "Medio alta", "sommersione": "Bassa", "inquinanti": "Alta", "voc_classe": "Monoterpeni", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "1", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "119", "co2_maturo_assim": "49", "o3": "0.1", "no2": "<0.05", "so2": "<0.05", "pm10": "0.1", "nome_comune": "Cipresso comune"}, "diospyros virginiana": {"specie": "Diospyros virginiana", "fogliame": "Decidua", "origine": "Esotica – Nord America", "invasiva": "Non invasiva", "forma_chioma": "Ovale o arrotondata", "crescita_cm": "15-25", "altezza_m": "11-18", "suolo": "Nessuna esigenza particolare", "ph": "5-7.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-25", "trapiantabilita": "Scarsa", "siccita": "Medio alta", "salinita": "Bassa", "compattazione": "Medio alta", "sommersione": "Medio alta", "inquinanti": "Alta", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "1644", "co2_maturo_assim": "358", "o3": "0.1", "no2": "0.1", "so2": "<0.05", "pm10": "0.1", "nome_comune": "Cachi americano"}, "eriobotrya japonica": {"specie": "Eriobotrya japonica", "fogliame": "Sempreverde", "origine": "Esotica – Cina e Giappone", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata o espansa", "crescita_cm": "15-25", "altezza_m": "4-8", "suolo": "Nessuna esigenza particolare, anche suoli calcarei", "ph": "5.5-8.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-15", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Media", "compattazione": "Media", "sommersione": "Media", "inquinanti": "Media", "voc_classe": "Monoterpeni", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "2", "co2_nuovo_assim": "3", "co2_maturo_stoccata": "160", "co2_maturo_assim": "52", "o3": "0.2", "no2": "0.1", "so2": "<0.05", "pm10": "0.1", "nome_comune": "Nespolo del Giappone"}, "erythrina christa-galli": {"specie": "Erythrina christa-galli", "fogliame": "Decidua", "origine": "Esotica – Sud America", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata o espansa", "crescita_cm": "60-70", "altezza_m": "4-12", "suolo": "Sabbioso o franco", "ph": "5-7.5", "esposizione": "Pieno sole", "temp_min": "-5", "trapiantabilita": "Media", "siccita": "Media", "salinita": "Medio alta", "compattazione": "Medio alta", "sommersione": "Alta", "inquinanti": "Media", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Media+media", "co2_nuovo_stoccata": "1", "co2_nuovo_assim": "3", "co2_maturo_stoccata": "163", "co2_maturo_assim": "60", "o3": "0.2", "no2": "0.1", "so2": "<0.05", "pm10": "0.1", "nome_comune": "Eritrina"}, "eucalyptus ficifolia": {"specie": "Eucalyptus ficifolia", "fogliame": "Sempreverde", "origine": "Esotica – Australia", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata o ovale irregolare", "crescita_cm": "60-80", "altezza_m": "9-12", "suolo": "Sabbioso o franco", "ph": "5.5-7.5", "esposizione": "Pieno sole", "temp_min": "0", "trapiantabilita": "Scarsa", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Medio alta", "sommersione": "Molto bassa", "inquinanti": "Alta", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Alta+alta", "co2_nuovo_stoccata": "9", "co2_nuovo_assim": "10", "co2_maturo_stoccata": "74", "co2_maturo_assim": "60", "o3": "0.1", "no2": "<0.05", "so2": "0.1", "pm10": "0.1", "nome_comune": "Eucalipto fiorito"}, "eucalyptus gunnii": {"specie": "Eucalyptus gunnii", "fogliame": "Sempreverde", "origine": "Esotica – Australia", "invasiva": "Non invasiva", "forma_chioma": "Ovale", "crescita_cm": "100-150", "altezza_m": "20-25", "suolo": "Sabbioso e sabbio-limoso o franco, anche ricco di scheletro", "ph": "5.5-7.5", "esposizione": "Pieno sole", "temp_min": "-15", "trapiantabilita": "Scarsa", "siccita": "Medio alta", "salinita": "Alta", "compattazione": "Media", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Alta+alta", "co2_nuovo_stoccata": "3", "co2_nuovo_assim": "6", "co2_maturo_stoccata": "4028", "co2_maturo_assim": "426", "o3": "0.1", "no2": "0.1", "so2": "<0.05", "pm10": "0.1", "nome_comune": "Eucalipto"}, "fagus sylvatica": {"specie": "Fagus sylvatica", "fogliame": "Decidua", "origine": "Autoctona – in Italia diffusa prevalentemente in quota (800-1000 m)", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "30-40", "altezza_m": "15-18", "suolo": "Nessuna esigenza particolare, purché ricco e profondo", "ph": "4-7", "esposizione": "Pieno sole, mezz'ombra e ombra", "temp_min": "-30", "trapiantabilita": "Scarsa", "siccita": "Molto bassa", "salinita": "Molto bassa", "compattazione": "Molto bassa", "sommersione": "Molto bassa", "inquinanti": "Media", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Bassa+bassa", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "1631", "co2_maturo_assim": "219", "o3": "0.1", "no2": "0.1", "so2": "0.2", "pm10": "0.1", "nome_comune": "Faggio"}, "ficus macrophylla": {"specie": "Ficus macrophylla", "fogliame": "Sempreverde", "origine": "Esotica – Australia", "invasiva": "Non invasiva", "forma_chioma": "Espansa, con radici aeree", "crescita_cm": "60-70", "altezza_m": "15-40", "suolo": "Nessuna esigenza particolare", "ph": "5-7.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "0", "trapiantabilita": "Media", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Bassa", "sommersione": "Medio alta", "inquinanti": "Media", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Alta+bassa", "co2_nuovo_stoccata": "1", "co2_nuovo_assim": "3", "co2_maturo_stoccata": "2601", "co2_maturo_assim": "224", "o3": "0.6", "no2": "0.4", "so2": "<0.05", "pm10": "0.3", "nome_comune": "Ficus australiano"}, "ficus microcarpa": {"specie": "Ficus microcarpa", "fogliame": "Sempreverde", "origine": "Naturalizzata in Sardegna – India e Malesia", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "50-60", "altezza_m": "8-15", "suolo": "Sabbioso o franco", "ph": "5-7.5", "esposizione": "Pieno sole", "temp_min": "0", "trapiantabilita": "Media", "siccita": "Medio alta", "salinita": "Media", "compattazione": "Medio alta", "sommersione": "Bassa", "inquinanti": "Media", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Alta+bassa", "co2_nuovo_stoccata": "3", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "222", "co2_maturo_assim": "39", "o3": "0.2", "no2": "0.1", "so2": "0.1", "pm10": "0.1", "nome_comune": "Ficus cinese"}, "firmiana simplex": {"specie": "Firmiana simplex", "fogliame": "Decidua", "origine": "Esotica – Cina e Giappone", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "30-40", "altezza_m": "9-14", "suolo": "Sabbioso o franco", "ph": "6-8.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-20", "trapiantabilita": "Buona", "siccita": "Media", "salinita": "Media", "compattazione": "Media", "sommersione": "Bassa", "inquinanti": "Media", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "499", "co2_maturo_assim": "142", "o3": "<0.05", "no2": "0.1", "so2": "0.1", "pm10": "0.1", "nome_comune": "Firmiana"}, "fraxinus excelsior": {"specie": "Fraxinus excelsior", "fogliame": "Decidua", "origine": "Autoctona – diffusa in Italia eccetto Calabria e Basilicata", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "15-30", "altezza_m": "21-25", "suolo": "Nessuna esigenza particolare, tollera suoli calcarei", "ph": "5-8.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-30", "trapiantabilita": "Media", "siccita": "Media", "salinita": "Media", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "3", "co2_nuovo_assim": "2", "co2_maturo_stoccata": "1828", "co2_maturo_assim": "135", "o3": "0.5", "no2": "0.2", "so2": "0.1", "pm10": "0.2", "nome_comune": "Frassino maggiore"}, "fraxinus ornus": {"specie": "Fraxinus ornus", "fogliame": "Decidua", "origine": "Autoctona – diffusa in tutta Italia dal mare al Fagetum", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "20-40", "altezza_m": "12-15", "suolo": "Nessuna esigenza particolare", "ph": "5-7.5", "esposizione": "Pieno sole", "temp_min": "-25", "trapiantabilita": "Media", "siccita": "Media", "salinita": "Media", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "3", "co2_nuovo_assim": "2", "co2_maturo_stoccata": "972", "co2_maturo_assim": "59", "o3": "0.3", "no2": "0.1", "so2": "<0.05", "pm10": "0.1", "nome_comune": "Orniello"}, "fraxinus oxycarpa": {"specie": "Fraxinus oxycarpa", "fogliame": "Decidua", "origine": "Autoctona – diffusa in Italia eccetto Trentino, Piemonte, Liguria e Valle d'Aosta", "invasiva": "Non invasiva", "forma_chioma": "Ovale", "crescita_cm": "40-60", "altezza_m": "12-15", "suolo": "Nessuna esigenza particolare", "ph": "5-8.5", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Media", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Medio alta", "sommersione": "Medio alta", "inquinanti": "Alta", "voc_classe": "Non disponibile", "voc_quantita": "Non disponibile", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "1665", "co2_maturo_assim": "168", "o3": "0.1", "no2": "0.7", "so2": "0.1", "pm10": "0.1", "nome_comune": "Frassino meridionale"}, "ginkgo biloba": {"specie": "Ginkgo biloba", "fogliame": "Decidua", "origine": "Esotica – Cina", "invasiva": "Non invasiva", "forma_chioma": "Piramidale (giovane), piramidale o espansa (matura)", "crescita_cm": "20-30", "altezza_m": "15-24", "suolo": "Nessuna esigenza particolare", "ph": "5-7.5", "esposizione": "Pieno sole", "temp_min": "-35", "trapiantabilita": "Media", "siccita": "Alta", "salinita": "Media", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "Monoterpeni", "voc_quantita": "Alta", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "3606", "co2_maturo_assim": "599", "o3": "0.1", "no2": "0.1", "so2": "0.3", "pm10": "0.1", "nome_comune": "Ginkgo"}, "gleditsia triacanthos": {"specie": "Gleditsia triacanthos", "fogliame": "Decidua", "origine": "Esotica – Stati Uniti centro-orientali, naturalizzata in Italia", "invasiva": "INVASIVA", "forma_chioma": "Espansa", "crescita_cm": "60-70", "altezza_m": "9-21", "suolo": "Nessuna esigenza particolare, anche suoli calcarei", "ph": "5-8.5", "esposizione": "Pieno sole", "temp_min": "-40", "trapiantabilita": "Buona", "siccita": "Alta", "salinita": "Alta", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Bassa+media", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "1631", "co2_maturo_assim": "219", "o3": "0.1", "no2": "0.1", "so2": "0.2", "pm10": "0.1", "nome_comune": "Gleditsia"}, "grevillea robusta": {"specie": "Grevillea robusta", "fogliame": "Sempreverde", "origine": "Esotica – Australia occidentale", "invasiva": "Non invasiva", "forma_chioma": "Ovale o piramidale", "crescita_cm": "80-100", "altezza_m": "15-25", "suolo": "Nessuna esigenza particolare", "ph": "5-7", "esposizione": "Pieno sole", "temp_min": "-10", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Media", "sommersione": "Bassa", "inquinanti": "Media", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "1", "co2_nuovo_assim": "3", "co2_maturo_stoccata": "1391", "co2_maturo_assim": "167", "o3": "0.4", "no2": "0.3", "so2": "<0.05", "pm10": "0.3", "nome_comune": "Grevillea"}, "jacaranda mimosifolia": {"specie": "Jacaranda mimosifolia", "fogliame": "Decidua", "origine": "Esotica – Bolivia e Argentina", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "50-70", "altezza_m": "7-12", "suolo": "Sabbioso o franco", "ph": "6-7.5", "esposizione": "Pieno sole", "temp_min": "-10", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Media", "sommersione": "Media", "inquinanti": "Media", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "2", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "125", "co2_maturo_assim": "25", "o3": "0.2", "no2": "0.1", "so2": "<0.05", "pm10": "0.1", "nome_comune": "Jacaranda"}, "juglans nigra": {"specie": "Juglans nigra", "fogliame": "Decidua", "origine": "Esotica – America settentrionale", "invasiva": "Non invasiva", "forma_chioma": "Ovale o arrotondata", "crescita_cm": "50-70", "altezza_m": "15-23", "suolo": "Sabbioso, franco, franco argilloso", "ph": "4.5-8", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Media", "siccita": "Media", "salinita": "Media", "compattazione": "Medio alta", "sommersione": "Bassa", "inquinanti": "Media", "voc_classe": "Monoterpeni", "voc_quantita": "Media", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "3730", "co2_maturo_assim": "325", "o3": "0.1", "no2": "0.2", "so2": "0.3", "pm10": "0.1", "nome_comune": "Noce nero"}, "juglans regia": {"specie": "Juglans regia", "fogliame": "Decidua", "origine": "Naturalizzata – Asia occidentale", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "30-40", "altezza_m": "12-21", "suolo": "Nessuna esigenza particolare", "ph": "5.5-7.5", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Scarsa", "siccita": "Media", "salinita": "Media", "compattazione": "Bassa", "sommersione": "Bassa", "inquinanti": "No", "voc_classe": "Monoterpeni", "voc_quantita": "Media", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "1644", "co2_maturo_assim": "358", "o3": "0.1", "no2": "0.1", "so2": "0.2", "pm10": "0.1", "nome_comune": "Noce comune"}, "koelreuteria paniculata": {"specie": "Koelreuteria paniculata", "fogliame": "Decidua", "origine": "Esotica – Cina, Corea e Giappone", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "50-60", "altezza_m": "9-12", "suolo": "Nessuna esigenza particolare", "ph": "4.5-8", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Media", "sommersione": "Bassa", "inquinanti": "Alta", "voc_classe": "Isoprene", "voc_quantita": "Alta", "co2_nuovo_stoccata": "5", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "599", "co2_maturo_assim": "77", "o3": "<0.05", "no2": "<0.05", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Koelreuteria"}, "laburnum anagyroides": {"specie": "Laburnum anagyroides", "fogliame": "Decidua", "origine": "Autoctona – diffusa in Italia tranne Valle d'Aosta, Sicilia e Sardegna", "invasiva": "Non invasiva", "forma_chioma": "Espansa", "crescita_cm": "60-80", "altezza_m": "3-5", "suolo": "Sabbioso o franco, anche calcareo", "ph": "5-8", "esposizione": "Pieno sole e mezzombra", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Media", "salinita": "Bassa", "compattazione": "Bassa", "sommersione": "Bassa", "inquinanti": "No", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Media+alta", "co2_nuovo_stoccata": "4", "co2_nuovo_assim": "3", "co2_maturo_stoccata": "79", "co2_maturo_assim": "26", "o3": "<0.05", "no2": "0.1", "so2": "<0.05", "pm10": "<0.05", "nome_comune": "Maggiociondolo"}, "lagunaria patersonii": {"specie": "Lagunaria patersonii", "fogliame": "Sempreverde", "origine": "Esotica – Australia", "invasiva": "Non invasiva", "forma_chioma": "Piramidale espansa", "crescita_cm": "70-90", "altezza_m": "8-15", "suolo": "Nessuna esigenza particolare", "ph": "5-8.5", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Media", "siccita": "Media", "salinita": "Media", "compattazione": "Media", "sommersione": "Medio alta", "inquinanti": "Media", "voc_classe": "Non disponibile", "voc_quantita": "Non disponibile", "co2_nuovo_stoccata": "1", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "136", "co2_maturo_assim": "55", "o3": "0.1", "no2": "0.3", "so2": "0.4", "pm10": "0.1", "nome_comune": "Lagunaria"}, "laurus nobilis": {"specie": "Laurus nobilis", "fogliame": "Sempreverde", "origine": "Autoctona – bacino del Mediterraneo, diffusa in tutta Italia dal mare fino a 600 m slm", "invasiva": "Non invasiva", "forma_chioma": "Piramidale o conica (coltivato), irregolare (spontaneo)", "crescita_cm": "20-30", "altezza_m": "5-12", "suolo": "Franco-argilloso, ben drenato; tollera calcare moderato", "ph": "5.5-7.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-8", "trapiantabilita": "Buona", "siccita": "Alta", "salinita": "Bassa", "compattazione": "Bassa", "sommersione": "Molto bassa", "inquinanti": "Media", "voc_classe": "Monoterpeni", "voc_quantita": "Media", "co2_nuovo_stoccata": "2", "co2_nuovo_assim": "3", "co2_maturo_stoccata": "150", "co2_maturo_assim": "28", "o3": "0.1", "no2": "<0.05", "so2": "<0.05", "pm10": "0.05", "nome_comune": "Alloro"}, "liquidambar styraciflua": {"specie": "Liquidambar styraciflua", "fogliame": "Decidua", "origine": "Esotica – Stati Uniti sudoccidentali", "invasiva": "Non invasiva", "forma_chioma": "Piramidale", "crescita_cm": "20-30", "altezza_m": "18-23", "suolo": "Nessuna esigenza particolare", "ph": "4.5-7", "esposizione": "Pieno sole", "temp_min": "-20", "trapiantabilita": "Scarsa", "siccita": "Bassa", "salinita": "Bassa", "compattazione": "Media", "sommersione": "Media", "inquinanti": "Media", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Media+alta", "co2_nuovo_stoccata": "2", "co2_nuovo_assim": "3", "co2_maturo_stoccata": "3666", "co2_maturo_assim": "333", "o3": "0.1", "no2": "0.1", "so2": "0.3", "pm10": "0.1", "nome_comune": "Liquidambar"}, "liriodendron tulipifera": {"specie": "Liriodendron tulipifera", "fogliame": "Decidua", "origine": "Esotica – Stati Uniti orientali", "invasiva": "Non invasiva", "forma_chioma": "Ovale", "crescita_cm": "40-60", "altezza_m": "21-27", "suolo": "Sabbioso e franco", "ph": "4.5-7.5", "esposizione": "Pieno sole", "temp_min": "-20", "trapiantabilita": "Scarsa", "siccita": "Bassa", "salinita": "Bassa", "compattazione": "Media", "sommersione": "Molto bassa", "inquinanti": "Media", "voc_classe": "Isoprene", "voc_quantita": "Media", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "6918", "co2_maturo_assim": "436", "o3": "0.2", "no2": "0.3", "so2": "0.4", "pm10": "0.2", "nome_comune": "Tulipifero"}, "maclura pomifera": {"specie": "Maclura pomifera", "fogliame": "Decidua", "origine": "Esotica – Stati Uniti centroccidentali, naturalizzata in Abruzzo e Campania", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata irregolare", "crescita_cm": "70-90", "altezza_m": "6-12", "suolo": "Nessuna esigenza particolare", "ph": "4.5-7.5", "esposizione": "Pieno sole", "temp_min": "-25", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Media", "compattazione": "Medio alta", "sommersione": "Alta", "inquinanti": "Media", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "499", "co2_maturo_assim": "142", "o3": "<0.05", "no2": "<0.05", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Arancio degli Osage"}, "magnolia grandiflora": {"specie": "Magnolia grandiflora", "fogliame": "Sempreverde", "origine": "Esotica – Stati Uniti occidentali e Messico", "invasiva": "Non invasiva", "forma_chioma": "Piramidale", "crescita_cm": "40-60", "altezza_m": "18-24", "suolo": "Sabbioso o franco", "ph": "4.5-7", "esposizione": "Pieno sole e mezzombra", "temp_min": "-15", "trapiantabilita": "Scarsa", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Medio alta", "sommersione": "Bassa", "inquinanti": "Alta", "voc_classe": "Monoterpeni", "voc_quantita": "Alta", "co2_nuovo_stoccata": "1", "co2_nuovo_assim": "2", "co2_maturo_stoccata": "1996", "co2_maturo_assim": "164", "o3": "0.3", "no2": "0.2", "so2": "0.4", "pm10": "0.2", "nome_comune": "Magnolia sempreverde"}, "malus spp. (da fiore)": {"specie": "Malus spp. (da fiore)", "fogliame": "Decidua", "origine": "Zone temperate emisfero settentrionale – oltre 50 specie", "invasiva": "Non invasiva", "forma_chioma": "Espansa", "crescita_cm": "30-60", "altezza_m": "6-8", "suolo": "Nessuna esigenza particolare", "ph": "6-8.5", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Media", "salinita": "Bassa", "compattazione": "Media", "sommersione": "Bassa", "inquinanti": "Media", "voc_classe": "Monoterpeni", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "6", "co2_maturo_stoccata": "412", "co2_maturo_assim": "96", "o3": "<0.05", "no2": "<0.05", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Melo da fiore"}, "melia azedarach": {"specie": "Melia azedarach", "fogliame": "Decidua", "origine": "Esotica – India del nord e Cina orientale, naturalizzata in Sicilia", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "70-90", "altezza_m": "9-12", "suolo": "Sabbioso o franco", "ph": "5.5-8", "esposizione": "Pieno sole e mezzombra", "temp_min": "-15", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Medio alta", "sommersione": "Molto bassa", "inquinanti": "Alta", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "499", "co2_maturo_assim": "142", "o3": "<0.05", "no2": "0.1", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Melia"}, "metasequoia glyptostroboides": {"specie": "Metasequoia glyptostroboides", "fogliame": "Decidua", "origine": "Esotica – Cina centrale", "invasiva": "Non invasiva", "forma_chioma": "Piramidale", "crescita_cm": "70-90", "altezza_m": "21-30", "suolo": "Nessuna esigenza particolare (non troppo ricco di scheletro)", "ph": "4-7", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Media", "salinita": "Bassa", "compattazione": "Medio alta", "sommersione": "Medio alta", "inquinanti": "Alta", "voc_classe": "Isoprene", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "6918", "co2_maturo_assim": "436", "o3": "0.2", "no2": "0.3", "so2": "0.4", "pm10": "0.2", "nome_comune": "Metasequoia"}, "morus spp.": {"specie": "Morus spp.", "fogliame": "Decidua", "origine": "Esotica – Cina, naturalizzato in Lombardia, Piemonte, Emilia e Friuli", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "60-70", "altezza_m": "6-15", "suolo": "Nessuna esigenza particolare", "ph": "5.5-8.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-35", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Bassa", "sommersione": "Bassa", "inquinanti": "Media", "voc_classe": "Monoterpeni", "voc_quantita": "Media", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "499", "co2_maturo_assim": "142", "o3": "<0.05", "no2": "0.1", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Gelso"}, "nerium oleander": {"specie": "Nerium oleander", "fogliame": "Sempreverde", "origine": "Esotica – Asia, naturalizzato nelle regioni mediterranee", "invasiva": "Non invasiva", "forma_chioma": "Arbustiva", "crescita_cm": "60-90", "altezza_m": "2-4", "suolo": "Nessuna esigenza particolare, anche suoli ricchi di scheletro o calcarei", "ph": "5-8", "esposizione": "Pieno sole e mezzombra", "temp_min": "-15", "trapiantabilita": "Buona", "siccita": "Alta", "salinita": "Alta", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Media", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "1", "co2_nuovo_assim": "2", "co2_maturo_stoccata": "32", "co2_maturo_assim": "8", "o3": "<0.05", "no2": "<0.05", "so2": "<0.05", "pm10": "<0.05", "nome_comune": "Oleandro"}, "nyssa sylvatica": {"specie": "Nyssa sylvatica", "fogliame": "Decidua", "origine": "Esotica – Nord America", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata irregolare", "crescita_cm": "30-50", "altezza_m": "9-15", "suolo": "Nessuna esigenza particolare", "ph": "5.5-7", "esposizione": "Pieno sole e mezzombra", "temp_min": "-30", "trapiantabilita": "Scarsa", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "499", "co2_maturo_assim": "142", "o3": "<0.05", "no2": "0.1", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Tupelo"}, "olea europaea": {"specie": "Olea europaea", "fogliame": "Sempreverde", "origine": "Autoctona – bacino del Mediterraneo, diffusa in tutte le regioni tranne Trentino e Friuli", "invasiva": "Non invasiva", "forma_chioma": "Espansa o arrotondata", "crescita_cm": "30-60", "altezza_m": "5-10", "suolo": "Nessuna esigenza particolare, anche suoli ricchi di scheletro o calcarei", "ph": "6.5-8.5", "esposizione": "Pieno sole", "temp_min": "-10", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Bassa", "sommersione": "Molto bassa", "inquinanti": "Media", "voc_classe": "Monoterpeni", "voc_quantita": "Bassa/media", "co2_nuovo_stoccata": "3", "co2_nuovo_assim": "3", "co2_maturo_stoccata": "283", "co2_maturo_assim": "76", "o3": "0.2", "no2": "<0.05", "so2": "<0.05", "pm10": "0.1", "nome_comune": "Olivo"}, "ostrya carpinifolia": {"specie": "Ostrya carpinifolia", "fogliame": "Decidua", "origine": "Autoctona – diffusa in Europa centro meridionale e tutta Italia (eccetto Valle d'Aosta)", "invasiva": "Non invasiva", "forma_chioma": "Ovale", "crescita_cm": "40-60", "altezza_m": "8-12", "suolo": "Nessuna esigenza particolare", "ph": "4.5-7.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-25", "trapiantabilita": "Scarsa", "siccita": "Medio alta", "salinita": "Bassa", "compattazione": "Molto bassa", "sommersione": "Molto bassa", "inquinanti": "Media", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "499", "co2_maturo_assim": "142", "o3": "<0.05", "no2": "0.1", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Carpino nero"}, "parrotia persica": {"specie": "Parrotia persica", "fogliame": "Decidua", "origine": "Esotica – Asia centrale", "invasiva": "Non invasiva", "forma_chioma": "Espansa", "crescita_cm": "40-60", "altezza_m": "6-12", "suolo": "Sabbioso o franco, anche ricco di scheletro", "ph": "5-7.5", "esposizione": "Pieno sole, mezz'ombra e ombra", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Media", "salinita": "Bassa", "compattazione": "Bassa", "sommersione": "Bassa", "inquinanti": "Alta", "voc_classe": "Isoprene", "voc_quantita": "Non disponibile", "co2_nuovo_stoccata": "3", "co2_nuovo_assim": "3", "co2_maturo_stoccata": "321", "co2_maturo_assim": "57", "o3": "0.1", "no2": "0.3", "so2": "<0.05", "pm10": "<0.05", "nome_comune": "Parrotia"}, "paulownia tomentosa": {"specie": "Paulownia tomentosa", "fogliame": "Decidua", "origine": "Esotica – Cina", "invasiva": "INVASIVA", "forma_chioma": "Arrotondata", "crescita_cm": "100-120", "altezza_m": "9-12", "suolo": "Nessuna esigenza particolare. Anche suoli ricchi di scheletro o calcarei", "ph": "4.5-8", "esposizione": "Pieno sole e mezzombra", "temp_min": "-25", "trapiantabilita": "Buona", "siccita": "Media", "salinita": "Media", "compattazione": "Alta", "sommersione": "Medio alta", "inquinanti": "Alta", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "1100", "co2_maturo_assim": "314", "o3": "0.1", "no2": "0.1", "so2": "0.3", "pm10": "0.1", "nome_comune": "Paulonia"}, "phellodendron amurense": {"specie": "Phellodendron amurense", "fogliame": "Decidua", "origine": "Esotica – Asia orientale", "invasiva": "Non invasiva", "forma_chioma": "Espansa", "crescita_cm": "40-60", "altezza_m": "9-14", "suolo": "Franco, limoso, argilloso", "ph": "6-8", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Media", "siccita": "Media", "salinita": "Media", "compattazione": "Medio alta", "sommersione": "Medio alta", "inquinanti": "Media", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Bassa+alta", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "499", "co2_maturo_assim": "142", "o3": "<0.05", "no2": "0.1", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Felodendro"}, "picea pungens 'glauca'": {"specie": "Picea pungens 'Glauca'", "fogliame": "Sempreverde", "origine": "Esotica – Stati Uniti occidentali e montagne rocciose", "invasiva": "Non invasiva", "forma_chioma": "Piramidale", "crescita_cm": "20-30", "altezza_m": "9-18", "suolo": "Nessuna esigenza particolare", "ph": "6-7.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-30", "trapiantabilita": "Media", "siccita": "Media", "salinita": "Media", "compattazione": "Media", "sommersione": "Media", "inquinanti": "Media", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Media/alta+media", "co2_nuovo_stoccata": "1", "co2_nuovo_assim": "1", "co2_maturo_stoccata": "845", "co2_maturo_assim": "105", "o3": "0.1", "no2": "0.1", "so2": "0.1", "pm10": "0.1", "nome_comune": "Picea blu"}, "pinus halepensis": {"specie": "Pinus halepensis", "fogliame": "Sempreverde", "origine": "Autoctona – bacino del Mediterraneo, diffusa in Italia meridionale, insulare e coste tirreniche", "invasiva": "Non invasiva", "forma_chioma": "Irregolare, espansa (adulto); conica (giovane)", "crescita_cm": "40-60", "altezza_m": "15-25", "suolo": "Sabbioso o calcareo, povero, ben drenato; xerofilo", "ph": "6.5-8.5", "esposizione": "Pieno sole", "temp_min": "-12", "trapiantabilita": "Difficile", "siccita": "Alta", "salinita": "Media", "compattazione": "Bassa", "sommersione": "Molto bassa", "inquinanti": "Bassa", "voc_classe": "Monoterpeni", "voc_quantita": "Alta", "co2_nuovo_stoccata": "5", "co2_nuovo_assim": "6", "co2_maturo_stoccata": "520", "co2_maturo_assim": "82", "o3": "0.3", "no2": "0.1", "so2": "0.1", "pm10": "0.15", "nome_comune": "Pino d'Aleppo"}, "pinus pinaster": {"specie": "Pinus pinaster", "fogliame": "Sempreverde", "origine": "Autoctona – Mediterraneo occidentale, diffusa in Italia tirrenica (Toscana, Lazio, Liguria)", "invasiva": "Non invasiva", "forma_chioma": "Irregolare, espansa (adulto)", "crescita_cm": "50-70", "altezza_m": "20-30", "suolo": "Sabbioso, siliceo, acido, ben drenato; intollerante al calcare", "ph": "4.5-6.5", "esposizione": "Pieno sole", "temp_min": "-15", "trapiantabilita": "Difficile", "siccita": "Alta", "salinita": "Media", "compattazione": "Bassa", "sommersione": "Molto bassa", "inquinanti": "Bassa", "voc_classe": "Monoterpeni", "voc_quantita": "Alta", "co2_nuovo_stoccata": "5", "co2_nuovo_assim": "7", "co2_maturo_stoccata": "620", "co2_maturo_assim": "86", "o3": "0.3", "no2": "0.1", "so2": "0.1", "pm10": "0.15", "nome_comune": "Pino marittimo"}, "pinus pinea": {"specie": "Pinus pinea", "fogliame": "Sempreverde", "origine": "Autoctona – bacino del Mediterraneo, naturalizzato e diffuso in tutta Italia costiera e collinare", "invasiva": "Non invasiva", "forma_chioma": "Ombrelliforme (adulto), conica (giovane)", "crescita_cm": "30-50", "altezza_m": "15-25", "suolo": "Sabbioso, ben drenato; preferisce suoli silicei", "ph": "5.5-7.5", "esposizione": "Pieno sole", "temp_min": "-12", "trapiantabilita": "Difficile", "siccita": "Alta", "salinita": "Media", "compattazione": "Bassa", "sommersione": "Molto bassa", "inquinanti": "Bassa", "voc_classe": "Monoterpeni", "voc_quantita": "Alta", "co2_nuovo_stoccata": "5", "co2_nuovo_assim": "6", "co2_maturo_stoccata": "750", "co2_maturo_assim": "92", "o3": "0.3", "no2": "0.1", "so2": "0.1", "pm10": "0.2", "nome_comune": "Pino domestico"}, "pistacia lentiscus": {"specie": "Pistacia lentiscus", "fogliame": "Sempreverde", "origine": "Autoctona – bacino del Mediterraneo, diffusa in Italia meridionale, insulare e coste tirreniche", "invasiva": "Non invasiva", "forma_chioma": "Espansa cespugliosa", "crescita_cm": "15-25", "altezza_m": "2-5", "suolo": "Calcareo, sabbioso o argilloso, povero, ben drenato", "ph": "6.5-8.5", "esposizione": "Pieno sole", "temp_min": "-8", "trapiantabilita": "Difficile", "siccita": "Alta", "salinita": "Alta", "compattazione": "Bassa", "sommersione": "Molto bassa", "inquinanti": "Bassa", "voc_classe": "Monoterpeni", "voc_quantita": "Media", "co2_nuovo_stoccata": "1", "co2_nuovo_assim": "1", "co2_maturo_stoccata": "28", "co2_maturo_assim": "7", "o3": "0.1", "no2": "<0.05", "so2": "<0.05", "pm10": "0.05", "nome_comune": "Lentisco"}, "pistacia terebinthus": {"specie": "Pistacia terebinthus", "fogliame": "Decidua", "origine": "Autoctona – bacino del Mediterraneo, diffusa in Italia centro-meridionale e insulare", "invasiva": "Non invasiva", "forma_chioma": "Irregolare, espansa", "crescita_cm": "15-25", "altezza_m": "3-7", "suolo": "Calcareo, roccioso, ben drenato; calcicola", "ph": "6.5-8.5", "esposizione": "Pieno sole", "temp_min": "-15", "trapiantabilita": "Difficile", "siccita": "Alta", "salinita": "Media", "compattazione": "Bassa", "sommersione": "Molto bassa", "inquinanti": "Bassa", "voc_classe": "Monoterpeni", "voc_quantita": "Media", "co2_nuovo_stoccata": "1", "co2_nuovo_assim": "1", "co2_maturo_stoccata": "42", "co2_maturo_assim": "10", "o3": "0.1", "no2": "<0.05", "so2": "<0.05", "pm10": "0.05", "nome_comune": "Terebinto"}, "platanus x acerifolia": {"specie": "Platanus x acerifolia", "fogliame": "Decidua", "origine": "Ibrido P. orientalis x P. occidentalis – naturalizzato in tutta Italia", "invasiva": "Non invasiva", "forma_chioma": "Espansa", "crescita_cm": "30-40", "altezza_m": "21-30", "suolo": "Nessuna esigenza particolare", "ph": "5-8", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Medio alta", "sommersione": "Medio alta", "inquinanti": "Alta", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Alta+media", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "6918", "co2_maturo_assim": "436", "o3": "0.2", "no2": "0.3", "so2": "0.4", "pm10": "0.2", "nome_comune": "Platano"}, "platycladus orientalis": {"specie": "Platycladus orientalis", "fogliame": "Sempreverde", "origine": "Esotica – Manciuria e Corea. Naturalizzata in Lombardia, Friuli e Alto Adige", "invasiva": "Non invasiva", "forma_chioma": "Fastigiata", "crescita_cm": "20-50", "altezza_m": "4-6", "suolo": "Nessuna esigenza particolare", "ph": "4.5-7", "esposizione": "Pieno sole e mezzombra", "temp_min": "-25", "trapiantabilita": "Media", "siccita": "Bassa", "salinita": "Bassa", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "Monoterpeni", "voc_quantita": "Media", "co2_nuovo_stoccata": "1", "co2_nuovo_assim": "1", "co2_maturo_stoccata": "32", "co2_maturo_assim": "12", "o3": "<0.05", "no2": "<0.05", "so2": "<0.05", "pm10": "0.1", "nome_comune": "Tuia orientale"}, "populus alba": {"specie": "Populus alba", "fogliame": "Decidua", "origine": "Autoctona – diffusa in tutta Italia fino a 1000 m, prevalentemente in suoli umidi", "invasiva": "Non invasiva", "forma_chioma": "Espansa", "crescita_cm": "50-70", "altezza_m": "12-21", "suolo": "Nessuna esigenza particolare", "ph": "5-8", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Media", "salinita": "Medio alta", "compattazione": "Medio alta", "sommersione": "Alta", "inquinanti": "Alta", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Alta+media", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "1631", "co2_maturo_assim": "219", "o3": "0.1", "no2": "0.1", "so2": "0.2", "pm10": "0.1", "nome_comune": "Pioppo bianco"}, "populus nigra": {"specie": "Populus nigra", "fogliame": "Decidua", "origine": "Autoctona – diffusa in tutta Italia fino a 1000 m, prevalentemente in suoli umidi", "invasiva": "Non invasiva", "forma_chioma": "Espansa o fastigiata (cv. Italica)", "crescita_cm": "90-120", "altezza_m": "21-27", "suolo": "Nessuna esigenza particolare", "ph": "5-8.5", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Bassa", "salinita": "Media", "compattazione": "Medio alta", "sommersione": "Alta", "inquinanti": "Alta", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Alta+media", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "3606", "co2_maturo_assim": "599", "o3": "0.1", "no2": "0.1", "so2": "0.3", "pm10": "0.1", "nome_comune": "Pioppo nero"}, "populus tremuloides": {"specie": "Populus tremuloides", "fogliame": "Decidua", "origine": "Esotica – Nord America", "invasiva": "Non invasiva", "forma_chioma": "Ovale", "crescita_cm": "60-90", "altezza_m": "12-15", "suolo": "Nessuna esigenza particolare, anche suoli ricchi di scheletro", "ph": "5-7.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Molto bassa", "salinita": "Media", "compattazione": "Medio alta", "sommersione": "Medio alta", "inquinanti": "Alta", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Alta+alta", "co2_nuovo_stoccata": "19", "co2_nuovo_assim": "3", "co2_maturo_stoccata": "1036", "co2_maturo_assim": "145", "o3": "0.1", "no2": "0.4", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Tremolo americano"}, "prunus cerasifera 'pissardii'": {"specie": "Prunus cerasifera 'Pissardii'", "fogliame": "Decidua", "origine": "Esotica – Europa centrale e Asia centrale e sud occidentale. Naturalizzata in Piemonte, Lombardia, Friuli e Abruzzo", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "60-90", "altezza_m": "5-9", "suolo": "Nessuna esigenza particolare", "ph": "5-8.5", "esposizione": "Pieno sole", "temp_min": "-20", "trapiantabilita": "Buona", "siccita": "Media", "salinita": "Media", "compattazione": "Bassa", "sommersione": "Molto bassa", "inquinanti": "Media", "voc_classe": "Monoterpeni", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "5", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "599", "co2_maturo_assim": "77", "o3": "<0.05", "no2": "<0.05", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Prugnolo porpora"}, "prunus serrulata": {"specie": "Prunus serrulata", "fogliame": "Decidua", "origine": "Esotica – Giappone, Corea e Cina", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "40-60", "altezza_m": "6-10", "suolo": "Nessuna esigenza particolare", "ph": "5.5-8.5", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Media", "siccita": "Bassa", "salinita": "Bassa", "compattazione": "Molto bassa", "sommersione": "Molto bassa", "inquinanti": "No", "voc_classe": "Monoterpeni", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "5", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "599", "co2_maturo_assim": "77", "o3": "<0.05", "no2": "<0.05", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Ciliegio giapponese"}, "prunus subhirtella": {"specie": "Prunus subhirtella", "fogliame": "Decidua", "origine": "Esotica – Giappone", "invasiva": "Non invasiva", "forma_chioma": "Espansa o pendula (var. Pendula)", "crescita_cm": "60-90", "altezza_m": "6-12", "suolo": "Nessuna esigenza particolare", "ph": "4.5-7.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-30", "trapiantabilita": "Media", "siccita": "Bassa", "salinita": "Bassa", "compattazione": "Molto bassa", "sommersione": "Molto bassa", "inquinanti": "No", "voc_classe": "Monoterpeni", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "5", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "599", "co2_maturo_assim": "77", "o3": "<0.05", "no2": "<0.05", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Ciliegio pendulo"}, "pseudotsuga menziesii": {"specie": "Pseudotsuga menziesii", "fogliame": "Sempreverde", "origine": "Esotica – Nord America", "invasiva": "Non invasiva", "forma_chioma": "Piramidale", "crescita_cm": "40-50", "altezza_m": "12-24", "suolo": "Nessuna esigenza particolare, purchè non troppo magro", "ph": "5-7.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-30", "trapiantabilita": "Media", "siccita": "Bassa", "salinita": "Bassa", "compattazione": "Bassa", "sommersione": "Bassa", "inquinanti": "Media", "voc_classe": "Monoterpeni", "voc_quantita": "Bassa/media", "co2_nuovo_stoccata": "2", "co2_nuovo_assim": "2", "co2_maturo_stoccata": "2769", "co2_maturo_assim": "273", "o3": "0.3", "no2": "0.2", "so2": "0.4", "pm10": "0.3", "nome_comune": "Douglasia"}, "pyrus calleryana": {"specie": "Pyrus calleryana", "fogliame": "Decidua", "origine": "Esotica – Cina e Vietnam", "invasiva": "Non invasiva", "forma_chioma": "Piramidale", "crescita_cm": "40-50", "altezza_m": "9-15", "suolo": "Nessuna esigenza particolare", "ph": "6.5-8.5", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Media", "compattazione": "Media", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Bassa+media", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "8", "co2_maturo_stoccata": "412", "co2_maturo_assim": "84", "o3": "<0.05", "no2": "<0.05", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Pero callery"}, "quercus ilex": {"specie": "Quercus ilex", "fogliame": "Sempreverde", "origine": "Autoctona – ampiamente diffusa nell'Italia mediterranea e regioni a clima temperato", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "20-40", "altezza_m": "15-20", "suolo": "Nessuna esigenza particolare", "ph": "5.5-8", "esposizione": "Pieno sole, mezzombra e ombra", "temp_min": "-20", "trapiantabilita": "Media", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Alta+media", "co2_nuovo_stoccata": "4", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "4068", "co2_maturo_assim": "226", "o3": "0.6", "no2": "0.3", "so2": "0.1", "pm10": "0.4", "nome_comune": "Leccio"}, "quercus palustris": {"specie": "Quercus palustris", "fogliame": "Decidua", "origine": "Esotica – America nordorientale", "invasiva": "Non invasiva", "forma_chioma": "Piramidale", "crescita_cm": "35-40", "altezza_m": "18-21", "suolo": "Nessuna esigenza particolare", "ph": "4.5-7", "esposizione": "Pieno sole", "temp_min": "-35", "trapiantabilita": "Buona", "siccita": "Media", "salinita": "Bassa", "compattazione": "Medio alta", "sommersione": "Alta", "inquinanti": "Media", "voc_classe": "Monoterpeni", "voc_quantita": "Alta", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "3730", "co2_maturo_assim": "325", "o3": "0.1", "no2": "0.2", "so2": "0.3", "pm10": "0.1", "nome_comune": "Quercia delle paludi"}, "quercus pubescens": {"specie": "Quercus pubescens", "fogliame": "Decidua", "origine": "Autoctona – diffusa in tutta Italia dal livello del mare fino a 1200 m slm", "invasiva": "Non invasiva", "forma_chioma": "Espansa e arrotondata", "crescita_cm": "25-35", "altezza_m": "10-20", "suolo": "Calcareo o argilloso, anche povero, ben drenato", "ph": "6.5-8.5", "esposizione": "Pieno sole", "temp_min": "-25", "trapiantabilita": "Difficile", "siccita": "Alta", "salinita": "Bassa", "compattazione": "Bassa", "sommersione": "Bassa", "inquinanti": "Media", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Alta+media", "co2_nuovo_stoccata": "5", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "620", "co2_maturo_assim": "78", "o3": "0.3", "no2": "0.1", "so2": "0.1", "pm10": "0.2", "nome_comune": "Roverella"}, "quercus robur": {"specie": "Quercus robur", "fogliame": "Decidua", "origine": "Autoctona – ampiamente diffusa in Europa e in Italia (eccetto Sicilia e Sardegna)", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata o espansa", "crescita_cm": "30-40", "altezza_m": "20-25", "suolo": "Sabbioso o franco", "ph": "6.5-7.5", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Scarsa", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Media", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Alta+media", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "6918", "co2_maturo_assim": "436", "o3": "0.2", "no2": "0.3", "so2": "0.4", "pm10": "0.2", "nome_comune": "Farnia"}, "quercus rubra": {"specie": "Quercus rubra", "fogliame": "Decidua", "origine": "Esotica – Stati Uniti", "invasiva": "INVASIVA", "forma_chioma": "Arrotondata", "crescita_cm": "45", "altezza_m": "18-23", "suolo": "Sabbioso o franco", "ph": "4.5-7.5", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Scarsa", "siccita": "Media", "salinita": "Medio alta", "compattazione": "Medio alta", "sommersione": "Molto bassa", "inquinanti": "Alta", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Media+media", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "11", "co2_maturo_stoccata": "3730", "co2_maturo_assim": "349", "o3": "0.1", "no2": "0.2", "so2": "0.4", "pm10": "0.1", "nome_comune": "Quercia rossa"}, "quercus suber": {"specie": "Quercus suber", "fogliame": "Sempreverde", "origine": "Autoctona – Mediterraneo occidentale, diffusa in Sardegna, Sicilia, Calabria, Toscana e Lazio", "invasiva": "Non invasiva", "forma_chioma": "Espansa e arrotondata", "crescita_cm": "30-50", "altezza_m": "10-20", "suolo": "Sabbioso-siliceo, acido, ben drenato; intollerante al calcare", "ph": "4.5-6.5", "esposizione": "Pieno sole", "temp_min": "-10", "trapiantabilita": "Difficile", "siccita": "Alta", "salinita": "Bassa", "compattazione": "Bassa", "sommersione": "Molto bassa", "inquinanti": "Bassa", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Alta+media", "co2_nuovo_stoccata": "5", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "680", "co2_maturo_assim": "88", "o3": "0.3", "no2": "0.1", "so2": "0.1", "pm10": "0.2", "nome_comune": "Sughera"}, "robinia pseudoacacia": {"specie": "Robinia pseudoacacia", "fogliame": "Decidua", "origine": "Esotica – America nordorientale", "invasiva": "INVASIVA", "forma_chioma": "Espansa", "crescita_cm": "30-60", "altezza_m": "9-15", "suolo": "Nessuna esigenza particolare, anche suoli calcarei e magri", "ph": "4.5-8", "esposizione": "Pieno sole e mezzombra", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Media", "sommersione": "Bassa", "inquinanti": "Alta", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Media+alta", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "499", "co2_maturo_assim": "142", "o3": "<0.05", "no2": "0.1", "so2": "0.2", "pm10": "<0.05", "nome_comune": "Robinia"}, "salix alba": {"specie": "Salix alba", "fogliame": "Decidua", "origine": "Autoctona – ubiquitaria in Europa e in Italia", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "90-120", "altezza_m": "23-30", "suolo": "Nessuna esigenza particolare, purchè non troppo ricchi di scheletro", "ph": "4.5-8", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Molto bassa", "salinita": "Bassa", "compattazione": "Medio alta", "sommersione": "Alta", "inquinanti": "Alta", "voc_classe": "Isoprene", "voc_quantita": "Alta", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "14", "co2_maturo_stoccata": "7160", "co2_maturo_assim": "458", "o3": "0.5", "no2": "0.4", "so2": "0.3", "pm10": "0.1", "nome_comune": "Salice bianco"}, "salix babylonica": {"specie": "Salix babylonica", "fogliame": "Decidua", "origine": "Esotica – Cina", "invasiva": "Non invasiva", "forma_chioma": "Pendula", "crescita_cm": "80-100", "altezza_m": "9-12", "suolo": "Nessuna esigenza particolare, purchè non troppo ricchi di scheletro", "ph": "5-8.5", "esposizione": "Pieno sole", "temp_min": "-20", "trapiantabilita": "Buona", "siccita": "Bassa", "salinita": "Media", "compattazione": "Alta", "sommersione": "Alta", "inquinanti": "Alta", "voc_classe": "Isoprene", "voc_quantita": "Alta", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "412", "co2_maturo_assim": "102", "o3": "0.2", "no2": "0.1", "so2": "0.2", "pm10": "<0.05", "nome_comune": "Salice piangente"}, "schinus molle": {"specie": "Schinus molle", "fogliame": "Sempreverde", "origine": "Esotica – America centromeridionale. Naturalizzata in Basilicata", "invasiva": "Non invasiva", "forma_chioma": "Pendula", "crescita_cm": "70-90", "altezza_m": "5-12", "suolo": "Sabbioso, franco, franco argilloso", "ph": "5.5-8.5", "esposizione": "Pieno sole", "temp_min": "-10", "trapiantabilita": "Buona", "siccita": "Alta", "salinita": "Alta", "compattazione": "Media", "sommersione": "Bassa", "inquinanti": "Media", "voc_classe": "Monoterpeni", "voc_quantita": "Media", "co2_nuovo_stoccata": "2", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "136", "co2_maturo_assim": "55", "o3": "0.1", "no2": "<0.05", "so2": "<0.05", "pm10": "<0.05", "nome_comune": "Albero del pepe"}, "sorbus aria": {"specie": "Sorbus aria", "fogliame": "Decidua", "origine": "Autoctona – ubiquitaria in Italia", "invasiva": "Non invasiva", "forma_chioma": "Piramidale espansa", "crescita_cm": "30", "altezza_m": "11-14", "suolo": "Nessuna esigenza particolare, anche suoli calcarei o rocciosi", "ph": "5-8", "esposizione": "Pieno sole e mezz'ombra", "temp_min": "-30", "trapiantabilita": "Media", "siccita": "Bassa", "salinita": "Bassa", "compattazione": "Media", "sommersione": "Molto bassa", "inquinanti": "Alta", "voc_classe": "Isoprene e Monoterpeni", "voc_quantita": "Bassa+alta", "co2_nuovo_stoccata": "5", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "2337", "co2_maturo_assim": "154", "o3": "0.1", "no2": "0.1", "so2": "0.2", "pm10": "0.1", "nome_comune": "Farinaccio"}, "sorbus aucuparia": {"specie": "Sorbus aucuparia", "fogliame": "Decidua", "origine": "Autoctona – ubiquitaria in Italia e in Europa", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "30", "altezza_m": "6-12", "suolo": "Sabbioso o franco", "ph": "5-7.5", "esposizione": "Pieno sole, mezz'ombra e ombra", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Molto bassa", "salinita": "Molto bassa", "compattazione": "Media", "sommersione": "Molto bassa", "inquinanti": "Media", "voc_classe": "Isoprene", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "5", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "599", "co2_maturo_assim": "77", "o3": "<0.05", "no2": "<0.05", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Sorbo degli uccellatori"}, "styphnolobium japonicum": {"specie": "Styphnolobium japonicum", "fogliame": "Decidua", "origine": "Esotica – Cina e Korea", "invasiva": "Non invasiva", "forma_chioma": "Espansa o pendula (cv. Pendula)", "crescita_cm": "50-60", "altezza_m": "15-23", "suolo": "Sabbioso o franco", "ph": "5-8.5", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "Isoprene", "voc_quantita": "Non disponibile", "co2_nuovo_stoccata": "8", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "3606", "co2_maturo_assim": "599", "o3": "0.1", "no2": "0.1", "so2": "0.3", "pm10": "0.1", "nome_comune": "Sofora"}, "tamarix spp.": {"specie": "Tamarix spp.", "fogliame": "Decidua", "origine": "Autoctona – bacino del Mediterraneo", "invasiva": "Non invasiva", "forma_chioma": "Espansa", "crescita_cm": "50-70", "altezza_m": "2-5", "suolo": "Sabbioso o franco", "ph": "6-9", "esposizione": "Pieno sole", "temp_min": "-10", "trapiantabilita": "Buona", "siccita": "Alta", "salinita": "Alta", "compattazione": "Alta", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "4", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "79", "co2_maturo_assim": "26", "o3": "<0.05", "no2": "<0.05", "so2": "<0.05", "pm10": "<0.05", "nome_comune": "Tamerice"}, "taxodium distichum": {"specie": "Taxodium distichum", "fogliame": "Decidua", "origine": "Esotica – sud America e golfo del Messico", "invasiva": "Non invasiva", "forma_chioma": "Piramidale", "crescita_cm": "40-50", "altezza_m": "15-21", "suolo": "Nessuna esigenza particolare", "ph": "5-7.5", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Media", "siccita": "Media", "salinita": "Medio alta", "compattazione": "Alta", "sommersione": "Alta", "inquinanti": "Alta", "voc_classe": "Monoterpeni", "voc_quantita": "Alta", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "3730", "co2_maturo_assim": "325", "o3": "0.1", "no2": "0.2", "so2": "0.3", "pm10": "0.2", "nome_comune": "Cipresso calvo"}, "taxus baccata": {"specie": "Taxus baccata", "fogliame": "Sempreverde", "origine": "Autoctona – diffusa in tutta Italia", "invasiva": "Non invasiva", "forma_chioma": "Piramidale espansa", "crescita_cm": "15-20", "altezza_m": "9-18", "suolo": "Sabbioso, limoso o franco, anche suoli calcarei", "ph": "5-8", "esposizione": "Mezzombra e ombra", "temp_min": "-25", "trapiantabilita": "Media", "siccita": "Media", "salinita": "Media", "compattazione": "Molto bassa", "sommersione": "Bassa", "inquinanti": "Alta", "voc_classe": "Monoterpeni", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "2", "co2_nuovo_assim": "2", "co2_maturo_stoccata": "500", "co2_maturo_assim": "79", "o3": "0.2", "no2": "0.3", "so2": "0.1", "pm10": "0.1", "nome_comune": "Tasso"}, "tilia cordata": {"specie": "Tilia cordata", "fogliame": "Decidua", "origine": "Autoctona – diffusa prevalentemente al centro nord in Italia", "invasiva": "Non invasiva", "forma_chioma": "Ovale o piramidale (cv. Greenspire)", "crescita_cm": "30-40", "altezza_m": "18-21", "suolo": "Nessuna esigenza particolare, anche suoli calcarei", "ph": "4.5-7.5", "esposizione": "Mezzombra", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Media", "salinita": "Bassa", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "Isoprene", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "4", "co2_nuovo_assim": "8", "co2_maturo_stoccata": "3606", "co2_maturo_assim": "599", "o3": "0.1", "no2": "0.1", "so2": "0.3", "pm10": "0.1", "nome_comune": "Tiglio selvatico"}, "tilia platyphyllos": {"specie": "Tilia platyphyllos", "fogliame": "Decidua", "origine": "Autoctona – ubiquitaria in Italia", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "40-60", "altezza_m": "18-25", "suolo": "Nessuna esigenza particolare, anche suoli calcarei", "ph": "6.5-8.5", "esposizione": "Mezzombra", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Bassa", "salinita": "Media", "compattazione": "Media", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "Isoprene", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "3", "co2_nuovo_assim": "6", "co2_maturo_stoccata": "2751", "co2_maturo_assim": "231", "o3": "0.3", "no2": "0.6", "so2": "0.2", "pm10": "0.1", "nome_comune": "Tiglio nostrano"}, "tilia tomentosa": {"specie": "Tilia tomentosa", "fogliame": "Decidua", "origine": "Esotica – Balcani, Turchia e Asia occidentale", "invasiva": "Non invasiva", "forma_chioma": "Ovale", "crescita_cm": "30-35", "altezza_m": "15-21", "suolo": "Nessuna esigenza particolare, anche suoli calcarei", "ph": "5-8", "esposizione": "Pieno sole e mezzombra", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Media", "compattazione": "Media", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "Isoprene", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "3", "co2_nuovo_assim": "6", "co2_maturo_stoccata": "2751", "co2_maturo_assim": "231", "o3": "0.3", "no2": "0.6", "so2": "0.2", "pm10": "0.1", "nome_comune": "Tiglio argenteo"}, "tilia x europaea": {"specie": "Tilia x europaea", "fogliame": "Decidua", "origine": "Autoctona – ibrido tra T. cordata e T. platyphyllos", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "40-60", "altezza_m": "20-30", "suolo": "Nessuna esigenza particolare, anche suoli calcarei", "ph": "5-8.5", "esposizione": "Mezzombra", "temp_min": "-40", "trapiantabilita": "Buona", "siccita": "Media", "salinita": "Bassa", "compattazione": "Media", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "Isoprene", "voc_quantita": "Bassa", "co2_nuovo_stoccata": "3", "co2_nuovo_assim": "3", "co2_maturo_stoccata": "3237", "co2_maturo_assim": "231", "o3": "0.2", "no2": "0.2", "so2": "0.1", "pm10": "<0.05", "nome_comune": "Tiglio comune"}, "ulmus parvifolia": {"specie": "Ulmus parvifolia", "fogliame": "Decidua", "origine": "Esotica – Cina, Giappone, Corea del Nord e Vietnam", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "40-50", "altezza_m": "12-15", "suolo": "Nessuna esigenza particolare", "ph": "5.5-8", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Medio alta", "sommersione": "Media", "inquinanti": "Alta", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "2", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "771", "co2_maturo_assim": "143", "o3": "0.5", "no2": "0.2", "so2": "0.1", "pm10": "0.2", "nome_comune": "Olmo cinese"}, "ulmus procera": {"specie": "Ulmus procera", "fogliame": "Decidua", "origine": "Esotica – probabilmente originaria di Italia e Turchia", "invasiva": "Non invasiva", "forma_chioma": "Ovale", "crescita_cm": "80-100", "altezza_m": "16-25", "suolo": "Nessuna esigenza particolare", "ph": "5.5-8", "esposizione": "Pieno sole e mezzombra", "temp_min": "-40", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Medio alta", "compattazione": "Medio alta", "sommersione": "Bassa", "inquinanti": "Alta", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "4", "co2_nuovo_assim": "4", "co2_maturo_stoccata": "2842", "co2_maturo_assim": "259", "o3": "0.3", "no2": "1.5", "so2": "0.2", "pm10": "0.1", "nome_comune": "Olmo campestre"}, "ulmus pumila": {"specie": "Ulmus pumila", "fogliame": "Decidua", "origine": "Esotica – Siberia orientale, Cina, Corea e Manchuria", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "80-100", "altezza_m": "15-21", "suolo": "Nessuna esigenza particolare", "ph": "5.5-8", "esposizione": "Pieno sole", "temp_min": "-35", "trapiantabilita": "Buona", "siccita": "Medio alta", "salinita": "Media", "compattazione": "Alta", "sommersione": "Bassa", "inquinanti": "Alta", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "3730", "co2_maturo_assim": "325", "o3": "0.1", "no2": "0.2", "so2": "0.3", "pm10": "0.1", "nome_comune": "Olmo siberiano"}, "zelkova carpinifolia": {"specie": "Zelkova carpinifolia", "fogliame": "Decidua", "origine": "Esotica – Turchia, Caucaso e sudovest Asia", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "50-70", "altezza_m": "15-23", "suolo": "Nessuna esigenza particolare", "ph": "5.5-7.5", "esposizione": "Pieno sole e mezzombra", "temp_min": "-30", "trapiantabilita": "Media", "siccita": "Medio alta", "salinita": "Bassa", "compattazione": "Medio alta", "sommersione": "Molto bassa", "inquinanti": "Alta", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "3730", "co2_maturo_assim": "325", "o3": "0.1", "no2": "0.2", "so2": "0.3", "pm10": "0.1", "nome_comune": "Zelkova caucasica"}, "zelkova serrata": {"specie": "Zelkova serrata", "fogliame": "Decidua", "origine": "Esotica – Giappone, Korea, Cina dell'est e Taiwan", "invasiva": "Non invasiva", "forma_chioma": "Arrotondata", "crescita_cm": "50-60", "altezza_m": "15-25", "suolo": "Nessuna esigenza particolare", "ph": "5.5-7.5", "esposizione": "Pieno sole", "temp_min": "-30", "trapiantabilita": "Media", "siccita": "Medio alta", "salinita": "Bassa", "compattazione": "Medio alta", "sommersione": "Molto bassa", "inquinanti": "Alta", "voc_classe": "-", "voc_quantita": "-", "co2_nuovo_stoccata": "6", "co2_nuovo_assim": "5", "co2_maturo_stoccata": "3730", "co2_maturo_assim": "325", "o3": "0.1", "no2": "0.2", "so2": "0.3", "pm10": "0.1", "nome_comune": "Zelkova giapponese"}};
+const QV_SPECIES = ["Acacia dealbata", "Acer campestre", "Acer monspessulanum", "Acer negundo", "Acer platanoides", "Acer pseudoplatanus", "Acer rubrum", "Acer saccharinum", "Aesculus hippocastanum", "Aesculus x carnea", "Ailanthus altissima", "Albizzia julibrissin", "Araucaria araucana", "Arbutus unedo", "Bauhinia purpurea", "Betula nigra", "Betula papyrifera", "Betula pendula", "Brachychiton populneus", "Carpinus betulus", "Carpinus orientalis", "Carya illinoensis", "Catalpa bignonioides", "Celtis australis", "Ceratonia siliqua", "Cercidiphyllum japonicum", "Cercis siliquastrum", "Chamaecyparis lawsoniana", "Chorisia speciosa", "Cinnamomum camphora", "Citrus aurantium", "Citrus reticulata", "Corylus avellana", "Corylus colurna", "Cryptomeria japonica", "Cupressus sempervirens", "Diospyros virginiana", "Eriobotrya japonica", "Erythrina christa-galli", "Eucalyptus ficifolia", "Eucalyptus gunnii", "Fagus sylvatica", "Ficus macrophylla", "Ficus microcarpa", "Firmiana simplex", "Fraxinus excelsior", "Fraxinus ornus", "Fraxinus oxycarpa", "Ginkgo biloba", "Gleditsia triacanthos", "Grevillea robusta", "Jacaranda mimosifolia", "Juglans nigra", "Juglans regia", "Koelreuteria paniculata", "Laburnum anagyroides", "Lagunaria patersonii", "Laurus nobilis", "Liquidambar styraciflua", "Liriodendron tulipifera", "Maclura pomifera", "Magnolia grandiflora", "Malus spp. (da fiore)", "Melia azedarach", "Metasequoia glyptostroboides", "Morus spp.", "Nerium oleander", "Nyssa sylvatica", "Olea europaea", "Ostrya carpinifolia", "Parrotia persica", "Paulownia tomentosa", "Phellodendron amurense", "Picea pungens 'Glauca'", "Pinus halepensis", "Pinus pinaster", "Pinus pinea", "Pistacia lentiscus", "Pistacia terebinthus", "Platanus x acerifolia", "Platycladus orientalis", "Populus alba", "Populus nigra", "Populus tremuloides", "Prunus cerasifera 'Pissardii'", "Prunus serrulata", "Prunus subhirtella", "Pseudotsuga menziesii", "Pyrus calleryana", "Quercus ilex", "Quercus palustris", "Quercus pubescens", "Quercus robur", "Quercus rubra", "Quercus suber", "Robinia pseudoacacia", "Salix alba", "Salix babylonica", "Schinus molle", "Sorbus aria", "Sorbus aucuparia", "Styphnolobium japonicum", "Tamarix spp.", "Taxodium distichum", "Taxus baccata", "Tilia cordata", "Tilia platyphyllos", "Tilia tomentosa", "Tilia x europaea", "Ulmus parvifolia", "Ulmus procera", "Ulmus pumila", "Zelkova carpinifolia", "Zelkova serrata"];
+
+function getQV(species){
+  const key=(species||'').toLowerCase().trim();
+  if(QV_DB[key]) return QV_DB[key];
+  for(const k in QV_DB){
+    if(k.includes(key)||key.includes(k)) return QV_DB[k];
+    const g=key.split(' ')[0];
+    if(k.startsWith(g)&&k.split(' ').length>=2&&key.split(' ').length>=2&&k.split(' ')[1]===key.split(' ')[1]) return QV_DB[k];
+  }
+  return null;
+}
+
+// ═══ CONSTANTS ═══
+const MONTHS={5:'Mag',6:'Giu',7:'Lug',8:'Ago',9:'Set',10:'Ott'};
+const NEED_DEFS=[
+  {key:'taglio_erba',label:'Taglio erba',icon:'🌾'},
+  {key:'tutore',label:'Tutore',icon:'🪵'},
+  {key:'bandierina',label:'Bandierina',icon:'🚩'},
+  {key:'pacciamatura',label:'Pacciamatura',icon:'🟫'},
+  {key:'compost',label:'Compost',icon:'🌱'},
+  {key:'potatura',label:'Potatura',icon:'✂️'},
+  {key:'irrorazione',label:'Irroraz.',icon:'💨'}
+];
+const VIGOR_MAP={
+  excellent:{label:'Ottimo',color:'var(--vigor-excellent)'},
+  good:{label:'Buono',color:'var(--vigor-good)'},
+  fair:{label:'Discreto',color:'var(--vigor-fair)'},
+  declining:{label:'In declino',color:'var(--vigor-declining)'},
+  critical:{label:'Critico',color:'var(--vigor-critical)'},
+  dead:{label:'Morto',color:'var(--vigor-dead)'},
+  seminato:{label:'Seminato',color:'#8d6e63'},
+  primi_segnali:{label:'Primi segnali',color:'#a5d6a7'},
+  germogliato:{label:'Germogliato',color:'#66bb6a'},
+  germoglio_cresciuto:{label:'Germoglio cresciuto',color:'#2e7d32'},
+  pronto_dimora:{label:'Pronto alla dimora',color:'#1565c0'},
+  mai_segnali:{label:'Mai dato segnali',color:'#9e9e9e'}
+};
+const VIGOR_LIST=['excellent','good','fair','declining','critical','dead'];
+const VIGOR_LIST_VIVAIO=['seminato','primi_segnali','germogliato','germoglio_cresciuto','pronto_dimora','mai_segnali'];
+const INTERV_ICONS={irrigazione:'💧',potatura:'✂️',pacciamatura:'🟫',compost:'🌱',irrorazione:'💨',tutoraggio:'🪵',taglio_erba:'🌾',bandierina:'🚩',tutore:'🪵',cambio_stato:'🔄',modifica:'📝'};
+const DEFAULT_PLAN={5:{freq:7,liters:5},6:{freq:5,liters:5},7:{freq:3,liters:5},8:{freq:3,liters:5},9:{freq:5,liters:5},10:{freq:7,liters:5}};
+const DEFAULT_LITERS=5;
+function pad9(n){return String(n).padStart(9,'0');}
+function today(){return new Date().toISOString().split('T')[0];}
+function daysBetween(d1,d2){return Math.floor((new Date(d2)-new Date(d1))/86400000);}
+function needColor(dateStr){
+  if(!dateStr) return null;
+  const d=daysBetween(dateStr,today());
+  if(d<=10) return 'var(--need-green)';
+  if(d<=20) return 'var(--need-yellow)';
+  return 'var(--need-red)';
+}
+
+function wateringStatus(t){
+  const mo=new Date().getMonth()+1;
+  if(mo<5||mo>10) return null;
+  const plan=t.watering&&t.watering[mo];
+  if(!plan) return null;
+  const irrs=(t.interventions||[]).filter(i=>i.type==="irrigazione").sort((a,b)=>b.date.localeCompare(a.date));
+  if(irrs.length===0) return {days:null,never:true,color:'var(--need-yellow)'};
+  const since=daysBetween(irrs[0].date,today());
+  const overdue=since-plan.freq;
+  if(overdue<1) return null;
+  if(overdue<3) return {days:overdue,never:false,color:'var(--need-green)'};
+  if(overdue<5) return {days:overdue,never:false,color:'var(--need-yellow)'};
+  return {days:overdue,never:false,color:'var(--need-red)'};
+}
+
+const SAMPLE_TREES=[
+  {id:pad9(1),num:1,species:'Quercus ilex',common:'Leccio',location:'Viale principale',lat:41.7462,lon:12.3545,
+   vigor:'good',planted:'2020-03-15',zone:'',vivaio:null,
+   needs:{tutore:null,bandierina:null,compost:'2026-05-18',pacciamatura:'2026-05-01',potatura:null,irrorazione:null,taglio_erba:null},
+   watering:JSON.parse(JSON.stringify(DEFAULT_PLAN)),
+   interventions:[{id:'i1',type:'irrigazione',date:'2026-05-22',details:{volume_litri:5},note:''},
+     {id:'i2',type:'potatura',date:'2026-03-10',details:{tipologia:'pulizia_chioma'},note:'Rimosso secco'}],photos:[]},
+  {id:pad9(2),num:2,species:'Pinus pinea',common:'Pino domestico',location:'Angolo nord-est',lat:41.7455,lon:12.3562,
+   vigor:'fair',planted:'2015-11-10',zone:'',vivaio:null,
+   needs:{tutore:null,bandierina:'2026-05-20',compost:null,pacciamatura:null,potatura:'2026-04-10',irrorazione:null,taglio_erba:null},
+   watering:JSON.parse(JSON.stringify(DEFAULT_PLAN)),
+   interventions:[{id:'i3',type:'irrorazione',date:'2026-04-18',details:{categoria:'rameico'},note:'Trattamento preventivo'}],photos:[]},
+  {id:pad9(3),num:3,species:'Cercis siliquastrum',common:'Albero di Giuda',location:'Aiuola centrale',lat:41.7448,lon:12.3535,
+   vigor:'excellent',planted:'2022-02-20',zone:'',vivaio:null,
+   needs:{tutore:'2026-05-26',bandierina:null,compost:null,pacciamatura:'2026-05-25',potatura:null,irrorazione:null,taglio_erba:null},
+   watering:JSON.parse(JSON.stringify(DEFAULT_PLAN)),
+   interventions:[{id:'i4',type:'irrigazione',date:'2026-05-24',details:{volume_litri:5},note:''}],photos:[]},
+  {id:pad9(4),num:4,species:'Olea europaea',common:'Olivo',location:'Terrazza sud',lat:41.7470,lon:12.3555,
+   vigor:'good',planted:'2019-04-05',zone:'',vivaio:null,
+   needs:{tutore:null,bandierina:null,compost:'2026-05-10',pacciamatura:null,potatura:null,irrorazione:'2026-05-15',taglio_erba:null},
+   watering:JSON.parse(JSON.stringify(DEFAULT_PLAN)),
+   interventions:[],photos:[]}
+];
+
+let trees=[],zones=[],selectedId=null,lastSelectedId=null,addMode=false,addLatLng=null,markers={},map,waterLiters=DEFAULT_LITERS,activeZoneFilter='';
+
+// ═══ STORAGE ═══
+function loadData(){
+  try{const r=localStorage.getItem('arbor_v8');if(r){const d=JSON.parse(r);trees=d.trees||[];zones=d.zones||[];return;}}catch(e){}
+  trees=JSON.parse(JSON.stringify(SAMPLE_TREES));zones=[
+    {id:'z1',name:'VF Fontanella Chessa'},
+    {id:'z2',name:'VF Chessa'},
+    {id:'z3',name:'VF Fontanella Menzio SX'},
+    {id:'z4',name:'VF Fontanella Menzio DX'},
+    {id:'z5',name:'Piazza Omiccioli'},
+    {id:'z6',name:'Via Chessa Alberature Stradali'}
+  ];
+}
+function saveData(){
+  try{localStorage.setItem('arbor_v8',JSON.stringify({trees,zones}));}catch(e){}
+}
+function nextNum(){return trees.length>0?Math.max(...trees.map(t=>t.num||0))+1:1;}
+
+// ═══ ZONES ═══
+function renderZoneSelectors(){
+  const opts='<option value="">Tutte le zone</option>'+zones.map(z=>'<option value="'+z.id+'">'+z.name+'</option>').join('');
+  document.getElementById('zoneFilter').innerHTML=opts;
+  document.getElementById('zoneFilter').value=activeZoneFilter;
+  const fz=document.getElementById('fZone');
+  if(fz) fz.innerHTML='<option value="">-- nessuna --</option>'+zones.map(z=>'<option value="'+z.id+'">'+z.name+'</option>').join('');
+}
+document.getElementById('zoneFilter').onchange=function(){
+  activeZoneFilter=this.value;
+  renderMarkers();
+  const btn=document.getElementById('btnBulkWater');
+  if(this.value){
+    const zn=zones.find(z=>z.id===this.value);
+    btn.style.display='flex';
+    btn.textContent='💧 '+(zn?zn.name:'Zona');
+  } else {
+    btn.style.display='none';
+  }
+};
+document.getElementById('btnBulkWater').onclick=function(){
+  if(!activeZoneFilter) return;
+  const zn=zones.find(z=>z.id===activeZoneFilter);
+  const zoneTrees=trees.filter(t=>t.zone===activeZoneFilter);
+  const eligible=zoneTrees.filter(t=>canLogToday(t,'irrigazione'));
+  document.getElementById('bulkWaterInfo').textContent=
+    'Zona: '+(zn?zn.name:'?')+' — '+zoneTrees.length+' alberi totali, '+eligible.length+' da annaffiare oggi'+
+    (zoneTrees.length!==eligible.length?' ('+( zoneTrees.length-eligible.length)+' già annaffiati oggi)':'');
+  document.getElementById('bulkLiters').value=DEFAULT_LITERS;
+  document.getElementById('modalBulkWater').classList.add('open');
+};
+window.doBulkWater=function(){
+  if(!activeZoneFilter) return;
+  const liters=Math.max(1,parseInt(document.getElementById('bulkLiters').value)||DEFAULT_LITERS);
+  const zoneTrees=trees.filter(t=>t.zone===activeZoneFilter);
+  let count=0;const undoItems=[];
+  zoneTrees.forEach(t=>{
+    if(!canLogToday(t,'irrigazione')) return;
+    const iv={id:'i'+Date.now()+Math.random(),type:'irrigazione',date:today(),details:{volume_litri:liters},note:'(zona)'};
+    t.interventions.push(iv);
+    undoItems.push({treeId:t.id,id:iv.id});
+    count++;
+  });
+  saveData();renderMarkers();
+  document.getElementById('modalBulkWater').classList.remove('open');
+  const zn=zones.find(z=>z.id===activeZoneFilter);
+  showToast('💧 '+(zn?zn.name:'')+': '+count+' alberi annaffiati — '+liters+'L ciascuno',{type:'bulk',items:undoItems,label:'Irrigazione '+(zn?zn.name:'zona')});
+};
+document.getElementById('btnAddZone').onclick=function(){document.getElementById('modalZone').classList.add('open');document.getElementById('fZoneName').value='';};
+window.addZone=function(){
+  const name=document.getElementById('fZoneName').value.trim();
+  if(!name){showToast('⚠️ Inserisci un nome');return;}
+  zones.push({id:'z'+Date.now(),name});
+  saveData();renderZoneSelectors();
+  document.getElementById('modalZone').classList.remove('open');
+  showToast('📍 Zona "'+name+'" creata');
+};
+
+// ═══ MAP ═══
+function initMap(){
+  map=L.map('map',{zoomControl:false}).setView([41.746,12.355],17);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:20}).addTo(map);
+  const zoomCtrl=L.control.zoom({position:'topright'});zoomCtrl.addTo(map);setTimeout(function(){const zc=document.querySelector('.leaflet-top.leaflet-right');if(zc)zc.style.top='60px';},300);
+  map.on('click',onMapClick);
+  renderZoneSelectors();
+  renderMarkers();
+  setTimeout(function(){
+    const zc=document.querySelector('.leaflet-top.leaflet-right');
+    if(zc) zc.style.cssText='top:100px !important;right:10px;';
+    map.invalidateSize();
+  },300);
+}
+
+function makeIcon(tree){
+  const v=VIGOR_MAP[tree.vigor]||VIGOR_MAP.good;
+  // Fixed positions clockwise from top: irrigazione, tutore, bandierina, potatura, pacciamatura, compost, taglio_erba, irrorazione
+  const SLOTS=[
+    {key:'_water',icon:'💧',pos:{top:'-10px',left:'50%',ml:'-11px'}},
+    {key:'taglio_erba',icon:'🌾',pos:{top:'-2px',right:'-10px'}},
+    {key:'tutore',icon:'🪵',pos:{top:'50%',right:'-12px',mt:'-11px'}},
+    {key:'bandierina',icon:'🚩',pos:{bottom:'-2px',right:'-10px'}},
+    {key:'pacciamatura',icon:'🟫',pos:{bottom:'-10px',left:'50%',ml:'-11px'}},
+    {key:'compost',icon:'🌱',pos:{bottom:'-2px',left:'-10px'}},
+    {key:'potatura',icon:'✂️',pos:{top:'50%',left:'-12px',mt:'-11px'}},
+    {key:'irrorazione',icon:'💨',pos:{top:'-2px',left:'-10px'}}
+  ];
+  const ws=wateringStatus(tree);
+  let needHtml='';
+  SLOTS.forEach(slot=>{
+    let active=false,col=null,title='';
+    if(slot.key==='_water'){
+      if(!ws) return;
+      active=true; col=ws.color; title=ws.never?'Irrigazione: mai irrigato':'Irrigazione: '+ws.days+'gg di ritardo';
+    } else {
+      const dateVal=tree.needs&&tree.needs[slot.key];
+      if(!dateVal) return;
+      active=true; col=needColor(dateVal);
+      const days=daysBetween(dateVal,today());
+      const nd=NEED_DEFS.find(n=>n.key===slot.key);
+      title=(nd?nd.label:slot.key)+': '+days+'gg';
+    }
+    const p=slot.pos;
+    let style='position:absolute;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25);';
+    style+='background:'+col+';';
+    if(p.top) style+='top:'+p.top+';';
+    if(p.bottom) style+='bottom:'+p.bottom+';';
+    if(p.left) style+='left:'+p.left+';';
+    if(p.right) style+='right:'+p.right+';';
+    if(p.ml) style+='margin-left:'+p.ml+';';
+    if(p.mt) style+='margin-top:'+p.mt+';';
+    needHtml+='<span title="'+title+'" style="'+style+'">'+slot.icon+'</span>';
+  });
+  return L.divIcon({
+    className:'',
+    html:'<div class="tree-marker" style="position:relative;width:64px;height:64px;display:flex;align-items:center;justify-content:center;"><div title="'+tree.common+' ('+tree.species+')" style="width:46px;height:46px;border-radius:50%;background:'+v.color+';display:flex;align-items:center;justify-content:center;color:#fff;font-size:19px;font-weight:800;box-shadow:0 2px 10px rgba(0,0,0,.3);border:3px solid #fff;font-family:DM Sans,sans-serif;">'+(tree.num||'?')+'</div>'+needHtml+'</div>',
+    iconSize:[64,64],iconAnchor:[32,32]
+  });
+}
+
+function renderMarkers(){
+  Object.values(markers).forEach(m=>map.removeLayer(m));
+  markers={};
+  trees.forEach(t=>{
+    if(t.in_vivaio||!t.lat||!t.lon) return;
+    if(activeZoneFilter&&t.zone!==activeZoneFilter) return;
+    const m=L.marker([t.lat,t.lon],{icon:makeIcon(t)}).addTo(map);
+    m.on('click',()=>selectTree(t.id));
+    markers[t.id]=m;
+  });
+  const shown=Object.keys(markers).length;
+  const inViv=trees.filter(t=>t.in_vivaio).length;
+  document.getElementById('treeCount').textContent=shown+' alberi'+(inViv?' + '+inViv+' in vivaio':'');
+}
+
+// ═══ SHEET ═══
+function selectTree(id){
+  selectedId=id; lastSelectedId=id; waterLiters=DEFAULT_LITERS;
+  const t=trees.find(x=>x.id===id);
+  if(!t) return;
+  renderSheet(t);
+  document.getElementById('sheet').classList.add('open');
+  document.getElementById('sheetOverlay').classList.add('open');
+  if(t.in_vivaio){
+    setTimeout(function(){
+      const sv=document.getElementById('sectionVivaio');
+      if(sv) sv.scrollIntoView({behavior:'smooth',block:'start'});
+    },400);
+  }
+}
+function closeSheet(){
+  document.getElementById('sheet').classList.remove('open');
+  document.getElementById('sheetOverlay').classList.remove('open');
+  selectedId=null;
+}
+window.closeSheet=closeSheet;
+
+function renderSheet(t){
+  const v=VIGOR_MAP[t.vigor]||VIGOR_MAP.good;
+  const zoneName=t.zone?((zones.find(z=>z.id===t.zone)||{}).name||''):'';
+  document.getElementById('sheetHeader').innerHTML=
+    '<div>'+(t.profilePhoto&&t.photos&&t.photos.find(p=>p.id===t.profilePhoto)?'<img class="profile-pic" src="'+t.photos.find(p=>p.id===t.profilePhoto).data+'"/>':'<span style="display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:var(--primary);color:#fff;font-size:14px;font-weight:700;margin-right:8px;vertical-align:middle;">'+t.num+'</span>')+'<span class="species">'+t.species+'</span></div>'+
+    '<div class="common">'+t.common+' · '+t.location+(t.planted?' · 🌱 '+formatDate(t.planted):'')+(zoneName?' · 📍 '+zoneName:'')+(t.last_verified?' · ✅ Verificato '+formatDate(t.last_verified):'')+'</div>'+
+    '<div class="meta"><span class="vigor-badge" style="background:'+v.color+'">'+v.label+'</span>'+
+    (t.in_vivaio?'<span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:#7a5c2e;color:#fff;">🌱 In Vivaio</span>':'')+
+    '<span class="id-badge">#'+t.num+' · '+t.id+'</span></div>';
+
+  // Vigor
+  document.getElementById('sectionVigor').innerHTML='<div class="section-title">Stato</div><div class="vigor-selector">'+
+    (t.in_vivaio?VIGOR_LIST_VIVAIO:VIGOR_LIST).map(vk=>{const vi=VIGOR_MAP[vk];return '<div class="vigor-opt'+(t.vigor===vk?' active':'')+'" style="background:'+vi.color+'" onclick="setVigor(\''+t.id+'\',\''+vk+'\')">'+vi.label+'</div>';}).join('')+'</div>';
+
+  // Zone
+  document.getElementById('sectionZone').innerHTML='<div class="section-title">Zona</div><div class="zone-row">'+
+    '<select id="treeZone" onchange="setZone(this.value)"><option value="">-- nessuna --</option>'+
+    zones.map(z=>'<option value="'+z.id+'"'+(t.zone===z.id?' selected':'')+'>'+z.name+'</option>').join('')+'</select>'+
+    '<button onclick="document.getElementById(\'modalZone\').classList.add(\'open\')">+ Zona</button></div>';
+
+  // Azioni
+  document.getElementById('azioniContent').innerHTML=
+    '<div class="water-row" style="padding:0;margin:0;">'+
+    '<div class="water-input-wrap"><button onclick="adjLiters(-1)">−</button>'+
+    '<input type="number" id="waterLitersInput" value="'+waterLiters+'" min="1" max="999" onchange="syncLiters()"/>'+
+    '<span>L</span><button onclick="adjLiters(1)">+</button></div>'+
+    '<button class="btn-water" onclick="doWater()">💧 Annaffia</button></div>';
+
+  // Needs
+  const nr=document.getElementById('needsRow');nr.innerHTML='';
+  // Watering status (computed, not toggleable)
+  const ws=wateringStatus(t);
+  if(ws){
+    const wpill=document.createElement('div');
+    wpill.className='need-pill active';
+    wpill.style.borderColor=ws.color;
+    wpill.style.cursor='default';
+    if(ws.never){
+      wpill.innerHTML='<span class="dot" style="background:'+ws.color+'"></span>💧 Mai irrigato';
+    } else {
+      wpill.innerHTML='<span class="dot" style="background:'+ws.color+'"></span>💧 Irrigazione <span class="age" style="color:'+ws.color+'">'+ws.days+'gg ritardo</span>';
+    }
+    nr.appendChild(wpill);
+  } else {
+    const mo=new Date().getMonth()+1;
+    if(mo>=5&&mo<=10){
+      const okpill=document.createElement('div');
+      okpill.className='need-pill';okpill.style.cursor='default';
+      okpill.innerHTML='<span class="dot" style="background:var(--need-green)"></span>💧 Irrigazione OK';
+      nr.appendChild(okpill);
+    }
+  }
+  NEED_DEFS.forEach(nd=>{
+    const dateVal=t.needs&&t.needs[nd.key];
+    const col=needColor(dateVal);
+    const days=dateVal?daysBetween(dateVal,today()):null;
+    const pill=document.createElement('div');
+    pill.className='need-pill'+(dateVal?' active':'');
+    if(dateVal) pill.style.borderColor=col;
+    pill.innerHTML='<span class="dot" style="background:'+(col||'var(--border)')+'"></span>'+nd.icon+' '+nd.label+
+      (days!==null?'<span class="age" style="color:'+col+'">'+days+'gg</span>':'');
+    pill.onclick=()=>toggleNeed(t.id,nd.key);
+    nr.appendChild(pill);
+  });
+
+  // Watering grid
+  const wg=document.getElementById('waterGrid');wg.innerHTML='';
+  [5,6,7,8,9,10].forEach(m=>{
+    const wp=(t.watering&&t.watering[m])||{freq:7,liters:5};
+    const cell=document.createElement('div');cell.className='water-cell';
+    cell.innerHTML='<div class="month">'+MONTHS[m]+'</div><div class="freq">'+wp.freq+'gg</div><div class="liters">'+wp.liters+'L</div>';
+    cell.onclick=()=>editWatering(t.id,m);
+    wg.appendChild(cell);
+  });
+  document.getElementById('waterEdit').classList.remove('open');
+  // Interventions
+  const il=document.getElementById('intervList');
+  const intervCount=document.getElementById('intervCount');
+  const intervs=(t.interventions||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const total=intervs.length;
+  if(intervCount) intervCount.textContent=total>5?'(ultimi 5 di '+total+' · vedi Storia)':'('+total+')';
+  if(intervs.length===0){il.innerHTML='<div class="empty-msg">Nessun intervento registrato</div>';}
+  else{il.innerHTML=intervs.slice(0,5).map(i=>{
+    const icon=INTERV_ICONS[i.type]||'📋';
+    const det=i.details?Object.entries(i.details).map(([k,val])=>val?''+val:'').filter(Boolean).join(' · '):'';
+    return '<div class="interv-item"><div class="interv-icon">'+icon+'</div><div class="interv-info">'+
+      '<div class="interv-type">'+i.type.charAt(0).toUpperCase()+i.type.slice(1)+(det?' · '+det:'')+'</div>'+
+      '<div class="interv-date">'+formatDate(i.date)+'</div>'+(i.note?'<div class="interv-note">'+i.note+'</div>':'')+
+      '</div><button class="interv-del" onclick="delInterv(\''+t.id+'\',\''+i.id+'\')" title="Elimina">✕</button></div>';
+  }).join('');}
+
+  renderImages(t);renderQV(t);renderVivaio(t);renderStoria(t);
+  // Hide/show sections based on vivaio status
+  ['sectionAzioni','sectionNecessita','sectionPianoAcqua','sectionUltimiInterventi','sectionImages'].forEach(function(id){
+    const el=document.getElementById(id);
+    if(el) el.style.display=t.in_vivaio?'none':'';
+  });
+}
+
+function formatDate(iso){return new Date(iso).toLocaleDateString('it-IT',{day:'numeric',month:'short',year:'numeric'});}
+
+// ═══ ACTIONS ═══
+window.adjLiters=function(d){const inp=document.getElementById('waterLitersInput');let v=parseInt(inp.value)||DEFAULT_LITERS;v=Math.max(1,v+d);inp.value=v;waterLiters=v;};
+window.syncLiters=function(){const inp=document.getElementById('waterLitersInput');waterLiters=Math.max(1,parseInt(inp.value)||DEFAULT_LITERS);inp.value=waterLiters;};
+
+function canLogToday(t,type){
+  const d=today();
+  return !(t.interventions||[]).some(i=>i.type===type&&i.date===d);
+}
+
+window.doWater=function(){
+  const t=trees.find(x=>x.id===selectedId);if(!t) return;
+  if(!canLogToday(t,'irrigazione')){showToast('⚠️ Irrigazione già registrata oggi');return;}
+  const iv={id:'i'+Date.now(),type:'irrigazione',date:today(),details:{volume_litri:waterLiters},note:''};
+  t.interventions.push(iv);
+  saveData();renderSheet(t);renderMarkers();
+  showToast('💧 #'+t.num+' '+t.common+' — '+waterLiters+'L',{type:'interventions',treeId:t.id,ids:[iv.id],label:'Irrigazione #'+t.num});
+};
+
+window.quickAction=function(needKey){
+  const t=trees.find(x=>x.id===selectedId);if(!t) return;
+  const type=needKey==='taglio_erba'?'taglio_erba':needKey;
+  if(!canLogToday(t,type)){showToast('⚠️ '+type+' già registrato oggi');return;}
+  const nd=NEED_DEFS.find(n=>n.key===needKey);
+  t.interventions.push({id:'i'+Date.now(),type,date:today(),details:{},note:''});
+  // Clear the corresponding need
+  if(t.needs&&t.needs[needKey]) t.needs[needKey]=null;
+  saveData();renderSheet(t);renderMarkers();
+  showToast((nd?nd.icon:'📋')+' #'+t.num+' '+type+' registrato');
+};
+
+window.delInterv=function(treeId,intervId){
+  const t=trees.find(x=>x.id===treeId);if(!t) return;
+  t.interventions=t.interventions.filter(i=>i.id!==intervId);
+  saveData();renderSheet(t);renderMarkers();
+  showToast('🗑️ Intervento eliminato');
+};
+
+window.setVigor=function(treeId,vigor){
+  const t=trees.find(x=>x.id===treeId);if(!t) return;
+  const oldVigor=t.vigor;
+  if(oldVigor===vigor) return;
+  t.vigor=vigor;
+  // Log state change
+  const oldLabel=(VIGOR_MAP[oldVigor]||{}).label||oldVigor;
+  const newLabel=(VIGOR_MAP[vigor]||{}).label||vigor;
+  t.interventions.push({id:'i'+Date.now(),type:'cambio_stato',date:today(),
+    details:{da:oldLabel,a:newLabel},note:''});
+  saveData();renderSheet(t);renderMarkers();
+  showToast('🌳 Stato: '+newLabel);
+};
+
+function logChange(t, campo, da, a){
+  if(da===a||(!da&&!a)) return;
+  t.interventions.push({id:'i'+Date.now()+Math.random(),type:'modifica',date:today(),
+    details:{campo:campo,da:String(da||'—'),a:String(a||'—')},note:''});
+}
+
+window.setZone=function(zoneId){
+  const t=trees.find(x=>x.id===selectedId);if(!t) return;
+  const oldZone=zones.find(z=>z.id===t.zone);
+  const newZone=zones.find(z=>z.id===zoneId);
+  logChange(t,'Zona',(oldZone?oldZone.name:'—'),(newZone?newZone.name:'—'));
+  t.zone=zoneId;saveData();renderSheet(t);
+  showToast('📍 Zona: '+(newZone?newZone.name:'nessuna'));
+};
+
+function toggleNeed(treeId,needKey){
+  const t=trees.find(x=>x.id===treeId);if(!t) return;
+  if(!t.needs) t.needs={};
+  const wasActive=t.needs[needKey];
+  t.needs[needKey]=wasActive?null:today();
+  if(wasActive&&canLogToday(t,needKey)){
+    t.interventions.push({id:'i'+Date.now(),type:needKey,date:today(),details:{},note:'(necessità completata)'});
+  }
+  saveData();renderSheet(t);renderMarkers();
+}
+
+function editWatering(treeId,month){
+  const t=trees.find(x=>x.id===treeId);if(!t) return;
+  const wp=(t.watering&&t.watering[month])||{freq:7,liters:5};
+  const we=document.getElementById('waterEdit');we.className='water-edit open';
+  we.innerHTML='<label>📅 '+MONTHS[month]+' — Modifica piano</label>'+
+    '<div class="row"><div><label>Ogni (giorni)</label><input type="number" id="weFreq" value="'+wp.freq+'" min="1" max="30"/></div>'+
+    '<div><label>Litri per volta</label><input type="number" id="weLiters" value="'+wp.liters+'" min="1" max="500"/></div></div>'+
+    '<button onclick="saveWatering(\''+treeId+'\','+month+')">Salva</button>';
+}
+window.saveWatering=function(treeId,month){
+  const t=trees.find(x=>x.id===treeId);if(!t) return;
+  if(!t.watering) t.watering=JSON.parse(JSON.stringify(DEFAULT_PLAN));
+  t.watering[month]={freq:parseInt(document.getElementById('weFreq').value)||7,liters:parseInt(document.getElementById('weLiters').value)||5};
+  saveData();renderSheet(t);showToast('📅 Piano '+MONTHS[month]+' aggiornato');
+};
+
+// ═══ ADD TREE ═══
+let addGps=null;
+document.getElementById('btnAddTree').onclick=()=>{
+  addMode=true;addLatLng=null;addGps=null;
+  document.getElementById('btnGpsAdd').className='gps-btn';
+  renderZoneSelectors();
+  // Auto-fill if GPS already tracking
+  if(lastGpsPos){
+    addGps={lat:lastGpsPos.lat,lon:lastGpsPos.lon};
+    document.getElementById('gpsStatus').textContent=lastGpsPos.lat.toFixed(5)+', '+lastGpsPos.lon.toFixed(5)+' (±'+Math.round(lastGpsPos.acc||5)+'m)';
+    document.getElementById('btnGpsAdd').textContent='✅ Posizione acquisita';
+    document.getElementById('btnGpsAdd').className='gps-btn done';
+  } else {
+    document.getElementById('gpsStatus').textContent='';
+    document.getElementById('btnGpsAdd').textContent='📍 Usa la mia posizione';
+  }
+  document.getElementById('modalAdd').classList.add('open');
+};
+document.getElementById('btnGpsAdd').onclick=function(){
+  const btn=document.getElementById('btnGpsAdd');
+  const status=document.getElementById('gpsStatus');
+  // Use already-tracked position if available (faster, no extra permission)
+  if(lastGpsPos){
+    addGps={lat:lastGpsPos.lat,lon:lastGpsPos.lon};
+    status.textContent=addGps.lat.toFixed(5)+', '+addGps.lon.toFixed(5)+' (±'+Math.round(lastGpsPos.acc||5)+'m)';
+    btn.textContent='✅ Posizione acquisita';
+    btn.className='gps-btn done';
+    return;
+  }
+  // Fallback: fresh request
+  if(!navigator.geolocation){showToast('⚠️ GPS non disponibile');return;}
+  btn.textContent='📍 Acquisizione...';
+  btn.disabled=true;
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      addGps={lat:pos.coords.latitude,lon:pos.coords.longitude};
+      lastGpsPos={lat:pos.coords.latitude,lon:pos.coords.longitude,acc:pos.coords.accuracy};
+      status.textContent=addGps.lat.toFixed(5)+', '+addGps.lon.toFixed(5)+' (±'+Math.round(pos.coords.accuracy)+'m)';
+      btn.textContent='✅ Posizione acquisita';
+      btn.className='gps-btn done';
+      btn.disabled=false;
+    },
+    function(err){
+      btn.textContent='📍 Usa la mia posizione';
+      btn.disabled=false;
+      if(err.code===1) showToast('⚠️ Permesso GPS negato — abilitalo nelle impostazioni');
+      else if(err.code===3) showToast('⚠️ GPS timeout — riprova all\'aperto');
+      else showToast('⚠️ Errore GPS: '+err.message);
+    },
+    {enableHighAccuracy:true,timeout:15000,maximumAge:5000}
+  );
+};
+function onMapClick(e){
+  if(mapPickMode){
+    addLatLng=e.latlng; addGps=null;
+    if(pickMarker) map.removeLayer(pickMarker);
+    pickMarker=L.marker(e.latlng,{icon:L.divIcon({className:'',
+      html:'<div style="width:28px;height:28px;border-radius:50%;background:#2b5e3a;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>',
+      iconSize:[28,28],iconAnchor:[14,14]})}).addTo(map);
+    
+    document.getElementById('mapPickMsg').textContent='\u26ab '+e.latlng.lat.toFixed(4)+', '+e.latlng.lng.toFixed(4);
+    document.getElementById('mapPickConfirm').style.display='inline-block';
+    return;
+  }
+  if(!addMode) return;
+  addLatLng=e.latlng;
+  showToast('\uD83D\uDCCD '+e.latlng.lat.toFixed(4)+', '+e.latlng.lng.toFixed(4));
+}
+document.getElementById('btnCancelAdd').onclick=()=>{addMode=false;addLatLng=null;addGps=null;plantingTreeId=null;document.getElementById('fSoloSemina').checked=false;document.getElementById('fNormaleSection').style.display='block';document.getElementById('fSeminaSection').style.display='none';document.getElementById('modalAddTitle').textContent='Nuovo Albero';document.getElementById('modalAdd').classList.remove('open');};
+document.getElementById('btnConfirmAdd').onclick=()=>{
+  const species=document.getElementById('fSpecies').value.trim();
+  const common=document.getElementById('fCommon').value.trim();
+  const location=document.getElementById('fLocation').value.trim();
+  const vigor=document.getElementById('fVigor').value;
+  const soloSemina=document.getElementById('fSoloSemina').checked;
+  const zone=soloSemina?getOrCreateVivaioZone():document.getElementById('fZone').value;
+  if(!species&&!common){showToast('⚠️ Inserisci almeno un nome');return;}
+  if(species&&document.getElementById('fSpecies').dataset.validated!=='1'){
+    showToast('⚠️ Seleziona la specie dalla lista');
+    document.getElementById('fSpecies').focus();
+    return;
+  }
+  let lat=null,lon=null;
+  if(!soloSemina){
+    if(addGps){lat=addGps.lat;lon=addGps.lon;}
+    else if(addLatLng){lat=addLatLng.lat;lon=addLatLng.lng;}
+    else{lat=41.746+(Math.random()-.5)*.002;lon=12.355+(Math.random()-.5)*.002;}
+  }
+  const num=nextNum();
+  const vivAcq=soloSemina&&document.getElementById('fVivAcquistata').checked;
+
+  // PLANT MODE: update existing vivaio tree
+  if(plantingTreeId){
+    const pt=trees.find(x=>x.id===plantingTreeId);
+    if(pt){
+      pt.lat=lat||41.746+(Math.random()-.5)*.002;
+      pt.lon=lon||12.355+(Math.random()-.5)*.002;
+      pt.in_vivaio=false;
+      pt.planted=today();
+      pt.vigor='good';
+      pt.zone=zone;
+      pt.location=location||'';
+      saveData();renderMarkers();
+      map.setView([pt.lat,pt.lon],18);
+      showToast('🌳 #'+pt.num+' '+pt.common+' messo a dimora!');
+      plantingTreeId=null;
+      document.getElementById('modalAdd').classList.remove('open');
+      document.getElementById('modalAddTitle').textContent='Nuovo Albero';
+      ['fSpecies','fCommon','fLocation'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('fSpecies').dataset.validated='';
+      selectTree(pt.id);
+      return;
+    }
+  }
+
+  const newTree={id:pad9(num),num,species:species||common,common:common||species,location:location||'',
+    lat,lon,vigor:soloSemina?'seminato':vigor,zone,planted:soloSemina?null:today(),in_vivaio:soloSemina||false,
+    vivaio:soloSemina?{
+      num_progressivo:num,
+      data_semina:document.getElementById('fVivData').value||null,
+      num_semi:parseInt(document.getElementById('fVivSemi').value)||null,
+      num_piantine:parseInt(document.getElementById('fVivPiantine').value)||null,
+      num_travasi:0,
+      provenienza_seme:document.getElementById('fVivProvenienza').value||null,
+      trattamento_seme:document.getElementById('fVivTrattamento').value,
+      conservazione:document.getElementById('fVivConservazione').value,
+      ubicazione:document.getElementById('fVivUbicazione').value||null,
+      note_semina:document.getElementById('fVivNote').value||null,
+      acquistata:vivAcq,
+      provenienza_vivaio:vivAcq?document.getElementById('fVivProvVivaio').value||null:null,
+      data_acquisto:vivAcq?document.getElementById('fVivDataAcq').value||null:null,
+      prezzo:vivAcq?parseFloat(document.getElementById('fVivPrezzo').value)||null:null,
+      note_acquisto:vivAcq?document.getElementById('fVivNoteAcq').value||null:null
+    }:null,
+    needs:{tutore:null,bandierina:null,compost:null,pacciamatura:null,potatura:null,irrorazione:null,taglio_erba:null},
+    watering:JSON.parse(JSON.stringify(DEFAULT_PLAN)),interventions:[],photos:[]};
+  trees.push(newTree);saveData();
+  // Reset zone filter so new tree is always visible
+  if(activeZoneFilter && newTree.zone !== activeZoneFilter){
+    activeZoneFilter='';
+    document.getElementById('zoneFilter').value='';
+    document.getElementById('btnBulkWater').style.display='none';
+  }
+  renderMarkers();
+  if(!soloSemina&&lat&&lon) map.setView([lat,lon],18);
+  else if(soloSemina){renderVivaioPanel();}
+  addMode=false;addLatLng=null;addGps=null;
+  document.getElementById('modalAdd').classList.remove('open');
+  document.getElementById('fSoloSemina').checked=false;
+  document.getElementById('fNormaleSection').style.display='block';
+  document.getElementById('fSeminaSection').style.display='none';
+  document.getElementById('modalAddTitle').textContent='Nuovo Albero';
+  ['fSpecies','fCommon','fLocation'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fSpecies').dataset.validated='';
+  showToast((soloSemina?'🌱':'🌳')+' #'+num+' '+newTree.common+' aggiunto!');
+  selectTree(newTree.id);
+};
+
+
+// ═══ SPECIES AUTOCOMPLETE ═══
+window.filterSpecies=function(val){
+  document.getElementById('fSpecies').dataset.validated='';
+  const list=document.getElementById('speciesList');
+  if(!val||val.length<2){list.style.display='none';return;}
+  const lower=val.toLowerCase();
+  const matches=QV_SPECIES.filter(function(s){
+    if(s.toLowerCase().includes(lower)) return true;
+    var k=s.toLowerCase().trim();
+    return QV_DB[k]&&QV_DB[k].nome_comune&&QV_DB[k].nome_comune.toLowerCase().includes(lower);
+  }).slice(0,8);
+  if(matches.length===0){list.style.display='none';return;}
+  list.style.display='block';
+  list.innerHTML=matches.map(function(s){
+    var k=s.toLowerCase().trim();
+    var comune=QV_DB[k]&&QV_DB[k].nome_comune?' <small style="color:var(--muted);">'+QV_DB[k].nome_comune+'</small>':'';
+    return '<div onclick="pickSpecies(\''+s.replace(/\'/g,"\\'")+'\''+')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);">'+s+comune+'</div>';
+  }).join('');
+};
+window.pickSpecies=function(name){
+  document.getElementById('fSpecies').value=name;
+  document.getElementById('fSpecies').dataset.validated='1';
+  document.getElementById('speciesList').style.display='none';
+  // Auto-fill common name if empty
+  const key=name.toLowerCase().trim();
+  if(QV_DB[key]&&QV_DB[key].nome_comune){
+    const fCommon=document.getElementById('fCommon');
+    if(!fCommon.value) fCommon.value=QV_DB[key].nome_comune;
+  }
+};
+document.addEventListener('click',function(e){
+  if(e.target.id!=='fSpecies') document.getElementById('speciesList').style.display='none';
+});
+
+
+// ═══ GPS TRACKING & SESSIONS ═══
+const PROXIMITY_M=5; // soglia prossimità in metri (GPS consumer ha precisione 3-5m)
+const DWELL_MS=10000; // tempo di sosta per riconoscimento (10 secondi)
+let gpsWatchId=null;
+let nearbyTimers={}; // treeId -> startTimestamp
+let wateringSession=false;
+let sessionWatered=[];
+let lastGpsPos=null;
+
+function distanceMeters(lat1,lon1,lat2,lon2){
+  const R=6371000,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function startGpsTracking(){
+  if(gpsWatchId) return;
+  if(!navigator.geolocation){showToast('⚠️ GPS non disponibile');return;}
+  gpsWatchId=navigator.geolocation.watchPosition(
+    function(pos){
+      lastGpsPos={lat:pos.coords.latitude,lon:pos.coords.longitude,acc:pos.coords.accuracy};
+      document.getElementById('gpsIndicator').classList.add('tracking');
+      checkProximity(lastGpsPos);
+    },
+    function(err){
+      document.getElementById('gpsIndicator').classList.remove('tracking');
+    },
+    {enableHighAccuracy:true,maximumAge:2000,timeout:10000}
+  );
+}
+
+function stopGpsTracking(){
+  if(gpsWatchId){navigator.geolocation.clearWatch(gpsWatchId);gpsWatchId=null;}
+  document.getElementById('gpsIndicator').classList.remove('tracking');
+  nearbyTimers={};
+}
+
+function checkProximity(pos){
+  const now=Date.now();
+  trees.forEach(function(t){
+    const dist=distanceMeters(pos.lat,pos.lon,t.lat,t.lon);
+    if(dist<=PROXIMITY_M){
+      // Within proximity
+      if(!nearbyTimers[t.id]){
+        nearbyTimers[t.id]=now; // start dwell timer
+      } else if(now-nearbyTimers[t.id]>=DWELL_MS){
+        // Dwelled long enough
+        onTreeDwell(t);
+        nearbyTimers[t.id]=now+60000; // prevent re-trigger for 60s
+      }
+    } else {
+      // Left proximity
+      delete nearbyTimers[t.id];
+    }
+  });
+}
+
+function onTreeDwell(t){
+  // Always update verification date
+  t.last_verified=today();
+  
+  // If watering session active, auto-water
+  if(wateringSession){
+    if(!sessionWatered.includes(t.id)&&canLogToday(t,'irrigazione')){
+      t.interventions.push({id:'i'+Date.now(),type:'irrigazione',date:today(),
+        details:{volume_litri:waterLiters},note:'(sessione auto)'});
+      sessionWatered.push(t.id);
+      document.getElementById('sessionCount').textContent=sessionWatered.length;
+      renderMarkers();
+      showToast('💧 #'+t.num+' '+t.common+' annaffiato automaticamente');
+    }
+  } else {
+    showToast('✅ #'+t.num+' '+t.common+' verificato');
+  }
+  saveData();
+  // Update sheet if this tree is open
+  if(selectedId===t.id) renderSheet(t);
+}
+
+function getOrCreateVivaioZone(){
+  let z=zones.find(x=>x.name==='Vivaio');
+  if(!z){z={id:'zVivaio',name:'Vivaio'};zones.push(z);saveData();renderZoneSelectors();}
+  return z.id;
+}
+
+window.toggleSeminaMode=function(){
+  const isSemina=document.getElementById('fSoloSemina').checked;
+  document.getElementById('fNormaleSection').style.display=isSemina?'none':'block';
+  document.getElementById('fSeminaSection').style.display=isSemina?'block':'none';
+  document.getElementById('modalAddTitle').textContent=isSemina?'🌱 Nuova Semina':'Nuovo Albero';
+  if(isSemina) renderZoneSelectors(); // refresh fZoneSemina too
+};
+
+window.toggleSession=function(){
+  if(wateringSession) endWateringSession();
+  else startWateringSession();
+};
+
+function startWateringSession(){
+  wateringSession=true;
+  sessionWatered=[];
+  document.getElementById('sessionBar').classList.add('active');
+  document.getElementById('sessionCount').textContent='0';
+  startGpsTracking();
+  document.getElementById('btnSession').textContent='⏹';document.getElementById('btnSession').style.background='#c43030';showToast('💧 Sessione annaffiamento iniziata — cammina vicino agli alberi');
+}
+
+function endWateringSession(){
+  const count=sessionWatered.length;
+  wateringSession=false;
+  sessionWatered=[];
+  document.getElementById('sessionBar').classList.remove('active');
+  stopGpsTracking();
+  document.getElementById('btnSession').textContent='💧▶';document.getElementById('btnSession').style.background='#2b8adb';showToast('⏹ Sessione terminata — '+count+' alberi annaffiati');
+}
+window.endWateringSession=endWateringSession;
+
+// Auto-start GPS tracking on load
+setTimeout(startGpsTracking,2000);
+
+
+// ═══ MAP PICK MODE ═══
+let mapPickMode=false;
+let pickMarker=null;
+
+window.startMapPick=function(){
+  mapPickMode=true;
+  document.getElementById('modalAdd').classList.remove('open');
+  document.getElementById('mapPickBanner').classList.add('active');
+  
+};
+
+window.confirmMapPick=function(){
+  mapPickMode=false;
+  document.getElementById('mapPickBanner').classList.remove('active');
+  
+  document.getElementById('mapPickConfirm').style.display='none';
+  document.getElementById('mapPickMsg').textContent='&#128205; Tocca la mappa per posizionare';
+  if(pickMarker){map.removeLayer(pickMarker);pickMarker=null;}
+  document.getElementById('btnGpsAdd').textContent='&#10003; Posizione scelta sulla mappa';
+  document.getElementById('btnGpsAdd').className='gps-btn done';
+  document.getElementById('gpsStatus').textContent=addLatLng.lat.toFixed(5)+', '+addLatLng.lng.toFixed(5);
+  document.getElementById('modalAdd').classList.add('open');
+};
+
+window.cancelMapPick=function(){
+  mapPickMode=false;addLatLng=null;
+  document.getElementById('mapPickBanner').classList.remove('active');
+  
+  document.getElementById('mapPickConfirm').style.display='none';
+  document.getElementById('mapPickMsg').textContent='&#128205; Tocca la mappa per posizionare';
+  if(pickMarker){map.removeLayer(pickMarker);pickMarker=null;}
+  document.getElementById('modalAdd').classList.add('open');
+};
+
+
+// ═══ VIVAIO MODE ═══
+function renderVivaioPanel(){
+  const vivList=document.getElementById('vivaioList');
+  const vivTrees=trees.filter(function(t){return t.in_vivaio;});
+  const badge=document.getElementById('vivaioCount');
+  if(vivTrees.length>0){
+    badge.style.display='flex';badge.textContent=vivTrees.length;
+  } else { badge.style.display='none'; }
+  if(!vivTrees.length){vivList.innerHTML='<div class="empty-msg">Nessuna pianta in vivaio</div>';return;}
+  vivList.innerHTML=vivTrees.map(function(t){
+    const viv=t.vivaio||{};
+    const sub=(viv.data_semina?'Semina: '+formatDate(viv.data_semina)+' &nbsp;':'')+
+               (viv.ubicazione?'📦 '+viv.ubicazione:'');
+    return '<div class="vivaio-item" onclick="openVivaioTree(\''+t.id+'\')">'+
+      '<div class="vivaio-num">'+t.num+'</div>'+
+      '<div class="vivaio-info"><div class="name">'+t.common+'</div>'+
+      '<div class="sub">'+t.species+(sub?' &mdash; '+sub:'')+'</div></div>'+
+      '<button class="btn-plant" onclick="event.stopPropagation();startPlant(\''+t.id+'\')">🌍 Pianta</button>'+
+    '</div>';
+  }).join('');
+}
+
+window.openVivaioTree=function(id){
+  document.getElementById('vivaioPanel').classList.remove('open');
+  selectTree(id);
+};
+
+let plantingTreeId=null;
+
+window.startPlant=function(treeId){
+  const t=trees.find(function(x){return x.id===treeId;});
+  if(!t) return;
+  plantingTreeId=treeId;
+  document.getElementById('vivaioPanel').classList.remove('open');
+  // Open modal in plant mode
+  document.getElementById('modalAddTitle').textContent='🌍 Messa a Dimora — #'+t.num+' '+t.common;
+  document.getElementById('fSpecies').value=t.species;
+  document.getElementById('fSpecies').dataset.validated='1';
+  document.getElementById('fCommon').value=t.common;
+  document.getElementById('fLocation').value=t.location||'';
+  document.getElementById('fSoloSemina').checked=false;
+  document.getElementById('fNormaleSection').style.display='block';
+  document.getElementById('fSeminaSection').style.display='none';
+  // Pre-select GPS if available
+  if(lastGpsPos){
+    addGps={lat:lastGpsPos.lat,lon:lastGpsPos.lon};
+    document.getElementById('gpsStatus').textContent=lastGpsPos.lat.toFixed(5)+', '+lastGpsPos.lon.toFixed(5);
+    document.getElementById('btnGpsAdd').textContent='✅ Posizione attuale';
+    document.getElementById('btnGpsAdd').className='gps-btn done';
+  } else {
+    addGps=null; addLatLng=null;
+    document.getElementById('gpsStatus').textContent='';
+    document.getElementById('btnGpsAdd').textContent='📍 Usa la mia posizione';
+    document.getElementById('btnGpsAdd').className='gps-btn';
+  }
+  renderZoneSelectors();
+  document.getElementById('fZone').value=t.zone||'';
+  document.getElementById('modalAdd').classList.add('open');
+};
+
+document.getElementById('btnShowVivaio').onclick=function(){
+  renderVivaioPanel();
+  document.getElementById('vivaioPanel').classList.add('open');
+};
+
+// Handle checkbox toggle in add modal
+
+// ═══ VOICE ═══
+let recognition=null;
+document.getElementById('btnMic').onclick=()=>{
+  if(recognition){recognition.stop();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){showToast('⚠️ Riconoscimento vocale non supportato');return;}
+  recognition=new SR();recognition.lang='it-IT';recognition.continuous=false;recognition.interimResults=true;
+  recognition.onstart=()=>{document.getElementById('btnMic').classList.add('listening');document.getElementById('voiceBar').classList.add('show');document.getElementById('voiceText').textContent='...';};
+  recognition.onresult=(e)=>{const r=e.results[e.results.length-1];document.getElementById('voiceText').textContent=r[0].transcript;if(r.isFinal) processVoice(r[0].transcript);};
+  recognition.onend=()=>{document.getElementById('btnMic').classList.remove('listening');recognition=null;setTimeout(()=>document.getElementById('voiceBar').classList.remove('show'),2000);};
+  recognition.onerror=(e)=>{document.getElementById('btnMic').classList.remove('listening');document.getElementById('voiceBar').classList.remove('show');recognition=null;if(e.error!=='aborted') showToast('⚠️ Errore: '+e.error);};
+  recognition.start();
+};
+
+function processVoice(text){
+  const lower=text.toLowerCase();
+  let t=selectedId?trees.find(x=>x.id===selectedId):null;
+  const numMatch=lower.match(/albero\s*(?:numero\s*)?(\d+)/);
+  if(numMatch){const n=parseInt(numMatch[1]);const byNum=trees.find(x=>x.num===n);if(byNum){t=byNum;selectTree(byNum.id);}}
+
+  // Zone watering — check FIRST before general irrigazione
+  const areaMatch=lower.match(/annaffi[a-z]*\s+(?:area|zona|il|la|i|le|tutta|tutto)?\s*(.+)?/);
+  if(areaMatch){
+    const zoneName=(areaMatch[1]||'').trim();
+    let z=null;
+    if(zoneName) z=zones.find(function(z){return z.name.toLowerCase().includes(zoneName)||zoneName.includes(z.name.toLowerCase());});
+    else if(activeZoneFilter) z=zones.find(function(z){return z.id===activeZoneFilter;});
+    if(z){
+      const zoneTrees=trees.filter(function(t){return t.zone===z.id;});
+      let count=0;
+      zoneTrees.forEach(function(t){
+        if(!canLogToday(t,'irrigazione')) return;
+        t.interventions.push({id:'i'+Date.now()+Math.random(),type:'irrigazione',date:today(),details:{volume_litri:waterLiters},note:'(voce zona)'});
+        count++;
+      });
+      saveData();renderMarkers();
+      showToast('💧 '+z.name+': '+count+' alberi annaffiati — '+waterLiters+'L');
+      return;
+    } else if(zoneName){
+      showToast('⚠️ Zona "'+zoneName+'" non trovata');
+      return;
+    }
+  }
+
+  const typeMap=[
+    [/annaffi|irrig|innaffi|acqua/,'irrigazione'],
+    [/potat|tagliato|potatura|secco/,'potatura'],
+    [/compost|fertilizz|ammend|micorriz/,'compost'],
+    [/irrorat|trattat|spruzz|rame|fungicid/,'irrorazione'],
+    [/pacciam|cippat/,'pacciamatura'],
+    [/tutor|palo|sostegno/,'tutoraggio'],
+    [/erba|taglio\s*erba|falci/,'taglio_erba']
+  ];
+  for(const [rx,type] of typeMap){
+    if(lower.match(rx)){
+      if(!t){showToast('⚠️ Seleziona un albero o di\' "albero [numero]"');return;}
+      if(!canLogToday(t,type)){showToast('⚠️ '+type+' già registrato oggi');return;}
+      const details={};
+      if(type==='irrigazione'){const m=lower.match(/(\d+)\s*lit/);details.volume_litri=m?parseInt(m[1]):DEFAULT_LITERS;}
+      t.interventions.push({id:'i'+Date.now(),type,date:today(),details,note:'(voce) '+text});
+      saveData();renderSheet(t);renderMarkers();
+      showToast((INTERV_ICONS[type]||'📋')+' #'+t.num+' '+type+' registrato');
+      return;
+    }
+  }
+  // Session commands
+  if(lower.match(/inizia.*annaffi|sessione.*annaffi|comincia.*annaffi|avvia.*annaffi/)){
+    startWateringSession();
+    return;
+  }
+  if(lower.match(/fine.*annaffi|stop.*annaffi|ferma.*annaffi|termina.*annaffi/)){
+    endWateringSession();
+    return;
+  }
+  showToast('🤔 Comando non riconosciuto');
+}
+
+// ═══ CAMERA ═══
+
+
+window.openPhotoInput=function(){
+  lastSelectedId=selectedId||lastSelectedId;
+  document.getElementById('photoInput').click();
+};
+window.handleSheetPhoto=function(input){
+  const file=input.files[0];
+  if(!file){showToast('⚠️ Nessun file');return;}
+  // Use lastSelectedId as fallback if selectedId was reset
+  const treeId=selectedId||lastSelectedId;
+  const t=trees.find(x=>x.id===treeId);
+  if(!t){showToast('⚠️ Nessun albero selezionato');return;}
+  if(!t.photos) t.photos=[];
+  if(t.photos.length>=5){showToast('⚠️ Massimo 5 foto');input.value='';return;}
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    t.photos.push({id:'p'+Date.now(),data:ev.target.result,timestamp:new Date().toISOString()});
+    if(!t.profilePhoto) t.profilePhoto=t.photos[0].id;
+    saveData();
+    // Reopen sheet if it was closed
+    if(!selectedId){selectedId=treeId;renderSheet(t);document.getElementById('sheet').classList.add('open');document.getElementById('sheetOverlay').classList.add('open');}
+    else renderImages(t);
+    showToast('📷 Foto salvata ('+t.photos.length+'/5)');
+  };
+  reader.onerror=function(){showToast('⚠️ Errore lettura foto');};
+  reader.readAsDataURL(file);
+  input.value='';
+};
+
+
+// ═══ QUALIVIVA ═══
+function renderQV(t){
+  var qv=getQV(t.species);var sec=document.getElementById('sectionQV');var content=document.getElementById('qvContent');
+  if(!qv){sec.style.display='none';return;}
+  sec.style.display='block';content.style.display='none';
+  document.getElementById('qvToggle').textContent='\u25B6 Qualiviva';
+  var v=function(val,css){return val?'<span class="qv-val'+(css?' '+css:'')+'">'+val+'</span>':'<span class="qv-val" style="opacity:.4">n.d.</span>';};
+  var r=function(label,val,css){return '<div class="qv-row"><span class="qv-label">'+label+'</span>'+v(val,css)+'</div>';};
+  var rf=function(label,val,css){return '<div class="qv-row qv-full"><span class="qv-label">'+label+'</span>'+v(val,css)+'</div>';};
+  var inv=qv.invasiva&&qv.invasiva.toUpperCase().indexOf('INVASIVA')>=0&&qv.invasiva.indexOf('Non')<0;
+  content.innerHTML=
+    '<div class="qv-section"><div class="qv-section-title">\uD83C\uDF3F Botanica</div><div class="qv-grid">'+
+      rf('Specie',qv.specie)+
+      r('Fogliame',qv.fogliame)+
+      r('Forma chioma',qv.forma_chioma)+
+      r('Crescita germogli',qv.crescita_cm?qv.crescita_cm+' cm/anno':null)+
+      r('Altezza maturit\u00E0',qv.altezza_m?qv.altezza_m+' m':null)+
+      r('Invasiva',qv.invasiva,inv?'warn':'')+
+      rf('Origine',qv.origine)+
+    '</div></div>'+
+    '<div class="qv-section"><div class="qv-section-title">\uD83C\uDF21\uFE0F Suolo & Clima</div><div class="qv-grid">'+
+      rf('Tessitura suolo',qv.suolo)+
+      r('pH',qv.ph)+
+      r('Esposizione',qv.esposizione)+
+      r('Temp. minima',qv.temp_min?qv.temp_min+'\u00B0C':null)+
+      r('Trapiantabilit\u00E0',qv.trapiantabilita)+
+    '</div></div>'+
+    '<div class="qv-section"><div class="qv-section-title">\uD83D\uDCAA Resistenze</div><div class="qv-grid">'+
+      r('Siccit\u00E0',qv.siccita,qv.siccita&&qv.siccita.match&&qv.siccita.match(/alta/i)?'good':'')+
+      r('Salinit\u00E0',qv.salinita)+
+      r('Compattazione',qv.compattazione)+
+      r('Sommersione',qv.sommersione)+
+      r('Inquinanti',qv.inquinanti)+
+    '</div></div>'+
+    '<div class="qv-section"><div class="qv-section-title">\uD83C\uDF2C\uFE0F Emissioni VOC</div><div class="qv-grid">'+
+      r('Classe',qv.voc_classe)+
+      r('Quantit\u00E0',qv.voc_quantita)+
+    '</div></div>'+
+    '<div class="qv-section"><div class="qv-section-title">\uD83C\uDF0D CO\u2082 & Inquinanti</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:6px">Valori in kg/anno</div>'+
+      '<div class="qv-co2">'+
+        '<div class="qv-co2-cell"><div class="v">'+(qv.co2_maturo_assim||'?')+'</div><div class="u">CO\u2082 assim. maturo</div></div>'+
+        '<div class="qv-co2-cell"><div class="v">'+(qv.co2_maturo_stoccata||'?')+'</div><div class="u">CO\u2082 stock maturo</div></div>'+
+        '<div class="qv-co2-cell"><div class="v">'+(qv.co2_nuovo_assim||'?')+'</div><div class="u">CO\u2082 assim. nuovo</div></div>'+
+        '<div class="qv-co2-cell"><div class="v">'+(qv.co2_nuovo_stoccata||'?')+'</div><div class="u">CO\u2082 stock nuovo</div></div>'+
+      '</div>'+
+      '<div class="qv-co2" style="margin-top:6px">'+
+        '<div class="qv-co2-cell"><div class="v">'+(qv.o3||'?')+'</div><div class="u">O\u2083</div></div>'+
+        '<div class="qv-co2-cell"><div class="v">'+(qv.no2||'?')+'</div><div class="u">NO\u2082</div></div>'+
+        '<div class="qv-co2-cell"><div class="v">'+(qv.so2||'?')+'</div><div class="u">SO\u2082</div></div>'+
+        '<div class="qv-co2-cell"><div class="v">'+(qv.pm10||'?')+'</div><div class="u">PM\u2081\u2080</div></div>'+
+      '</div>'+
+    '</div>';
+}
+
+
+// ═══ VIVAIO ═══
+const VIV_TRATTAMENTI=['nessuno','lavaggio','scarificatura'];
+const VIV_CONSERVAZIONE=['frigo','dimora appena raccolto'];
+const VIV_UBICAZIONE=['semenzaio','vasetto','vaso medio quadrato','vaso lungo'];
+
+function renderVivaio(t){
+  const vc=document.getElementById('vivaioContent');const viv=t.vivaio||{};
+  // Auto-expand for nursery trees
+  const autoOpen=t.in_vivaio;
+  document.getElementById('vivaioToggle').textContent=autoOpen?'\u25BC Vivaio':'\u25B6 Vivaio';
+  vc.style.display=autoOpen?'block':'none';
+  vc.innerHTML='<div class="viv-form">'+
+    '<div class="viv-row"><div class="viv-field"><label>N\u00B0 progressivo</label><input id="vivNum" type="number" value="'+(viv.num_progressivo||t.num||'')+'"/></div>'+
+    '<div class="viv-field"><label>Data semina</label><input id="vivData" type="date" value="'+(viv.data_semina||'')+'"/></div></div>'+
+    '<div class="viv-row"><div class="viv-field"><label>N\u00B0 semi piantati</label><input id="vivSemi" type="number" value="'+(viv.num_semi||'')+'"/></div>'+
+    '<div class="viv-field"><label>N\u00B0 piantine nate</label><input id="vivPiantine" type="number" value="'+(viv.num_piantine||'')+'"/></div></div>'+
+    '<div class="viv-row"><div class="viv-field"><label>N\u00B0 travasi</label><input id="vivTravasi" type="number" value="'+(viv.num_travasi||0)+'"/></div>'+
+    '<div class="viv-field"><label>Provenienza seme</label><input id="vivProvenienza" value="'+(viv.provenienza_seme||'')+'"/></div></div>'+
+    '<div class="viv-row"><div class="viv-field"><label>Trattamento seme</label><select id="vivTrattamento">'+
+    VIV_TRATTAMENTI.map(o=>'<option value="'+o+'"'+(viv.trattamento_seme===o?' selected':'')+'>'+o.charAt(0).toUpperCase()+o.slice(1)+'</option>').join('')+'</select></div>'+
+    '<div class="viv-field"><label>Conservazione</label><select id="vivConservazione">'+
+    VIV_CONSERVAZIONE.map(o=>'<option value="'+o+'"'+(viv.conservazione===o?' selected':'')+'>'+o.charAt(0).toUpperCase()+o.slice(1)+'</option>').join('')+'</select></div></div>'+
+    '<div class="viv-field"><label>Ubicazione</label><select id="vivUbicazione"><option value="">-- seleziona --</option>'+
+    VIV_UBICAZIONE.map(o=>'<option value="'+o+'"'+(viv.ubicazione===o?' selected':'')+'>'+o.charAt(0).toUpperCase()+o.slice(1)+'</option>').join('')+'</select></div>'+
+    '<div class="viv-field"><label>Note semina</label><textarea id="vivNote">'+(viv.note_semina||'')+'</textarea></div>'+
+    '<div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--primary-light);border-radius:10px;margin-top:4px;">'+
+      '<input type="checkbox" id="vivAcquistata" style="width:16px;height:16px;cursor:pointer;"'+(viv.acquistata?' checked':'')+'>'+
+      '<label for="vivAcquistata" style="font-size:13px;font-weight:600;color:var(--primary);cursor:pointer;">🛒 Pianta acquistata</label>'+
+    '</div>'+
+    '<div id="vivProvenienzaDiv" style="display:'+(viv.acquistata?'block':'none')+'">'+
+      '<div class="viv-field"><label>Vivaio di provenienza</label><input id="vivProvenienzaVivaio" value="'+(viv.provenienza_vivaio||'')+'" placeholder="es. Vivaio Rossi, Roma"/></div>'+
+      '<div class="viv-row">'+
+        '<div class="viv-field"><label>Data acquisto</label><input id="vivDataAcquisto" type="date" value="'+(viv.data_acquisto||'')+'"/></div>'+
+        '<div class="viv-field"><label>Prezzo (€)</label><input id="vivPrezzo" type="number" step="0.01" min="0" value="'+(viv.prezzo||'')+'" placeholder="0.00"/></div>'+
+      '</div>'+
+      '<div class="viv-field"><label>Note acquisto</label><textarea id="vivNoteAcquisto">'+(viv.note_acquisto||'')+'</textarea></div>'+
+    '</div>'+
+    '<script>document.getElementById("vivAcquistata").onchange=function(){document.getElementById("vivProvenienzaDiv").style.display=this.checked?"block":"none";}<\/script>'+
+    '<button class="viv-save" onclick="saveVivaio()">Salva dati vivaio</button></div>';
+}
+window.saveVivaio=function(){
+  const t=trees.find(x=>x.id===selectedId);if(!t) return;
+  const old=t.vivaio||{};
+  const newViv={num_progressivo:parseInt(document.getElementById('vivNum').value)||t.num,
+    data_semina:document.getElementById('vivData').value||null,num_semi:parseInt(document.getElementById('vivSemi').value)||null,
+    num_piantine:parseInt(document.getElementById('vivPiantine').value)||null,num_travasi:parseInt(document.getElementById('vivTravasi').value)||0,
+    provenienza_seme:document.getElementById('vivProvenienza').value||null,trattamento_seme:document.getElementById('vivTrattamento').value,
+    conservazione:document.getElementById('vivConservazione').value,ubicazione:document.getElementById('vivUbicazione').value||null,
+    note_semina:document.getElementById('vivNote').value||null,
+    acquistata:document.getElementById('vivAcquistata').checked||false,
+    provenienza_vivaio:document.getElementById('vivAcquistata').checked?(document.getElementById('vivProvenienzaVivaio').value||null):null,
+    data_acquisto:document.getElementById('vivAcquistata').checked?(document.getElementById('vivDataAcquisto').value||null):null,
+    prezzo:document.getElementById('vivAcquistata').checked?(parseFloat(document.getElementById('vivPrezzo').value)||null):null,
+    note_acquisto:document.getElementById('vivAcquistata').checked?(document.getElementById('vivNoteAcquisto').value||null):null};
+  // Log changes
+  const campiLabel={data_semina:'Data semina',num_semi:'N° semi',num_piantine:'N° piantine',
+    num_travasi:'Travasi',provenienza_seme:'Provenienza seme',trattamento_seme:'Trattamento',
+    conservazione:'Conservazione',ubicazione:'Ubicazione',note_semina:'Note semina',
+    provenienza_vivaio:'Vivaio provenienza',data_acquisto:'Data acquisto',
+    prezzo:'Prezzo',note_acquisto:'Note acquisto'};
+  Object.keys(campiLabel).forEach(function(k){
+    logChange(t,campiLabel[k],old[k],newViv[k]);
+  });
+  t.vivaio=newViv;
+  saveData();showToast('\uD83C\uDF31 Dati vivaio salvati — #'+t.num);
+  renderStoria(t);
+};
+
+
+
+// ═══ IMAGES ═══
+function renderImages(t){
+  const grid=document.getElementById('imgGrid');
+  const count=document.getElementById('imgCount');
+  if(!t.photos||t.photos.length===0){
+    grid.innerHTML='<div class="empty-msg">Nessuna foto · usa 📷 per scattare</div>';
+    count.textContent='(0/5)';
+    return;
+  }
+  count.textContent='('+t.photos.length+'/5)';
+  grid.innerHTML=t.photos.map(p=>{
+    const isProfile=t.profilePhoto===p.id;
+    return '<div class="img-thumb-wrap">'+
+      '<img class="img-thumb'+(isProfile?' profile':'')+'" src="'+p.data+'" onclick="viewFullImg(\''+p.id+'\')"/>'+
+      '<span class="img-thumb-del" onclick="delPhoto(\''+p.id+'\')" title="Elimina">✕</span>'+
+      '<span class="img-thumb-star" onclick="setProfilePhoto(\''+p.id+'\')" title="'+(isProfile?'Foto profilo':'Imposta come profilo')+'">'+(isProfile?'★':'☆')+'</span>'+
+    '</div>';
+  }).join('');
+}
+
+window.viewFullImg=function(photoId){
+  const t=trees.find(x=>x.id===selectedId);if(!t) return;
+  const p=(t.photos||[]).find(x=>x.id===photoId);if(!p) return;
+  document.getElementById('imgFullSrc').src=p.data;
+  document.getElementById('imgFullOverlay').classList.add('open');
+};
+
+window.delPhoto=function(photoId){
+  const t=trees.find(x=>x.id===selectedId);if(!t) return;
+  t.photos=t.photos.filter(p=>p.id!==photoId);
+  if(t.profilePhoto===photoId) t.profilePhoto=t.photos.length>0?t.photos[0].id:null;
+  saveData();renderSheet(t);renderMarkers();
+  showToast('🗑️ Foto eliminata');
+};
+
+window.setProfilePhoto=function(photoId){
+  const t=trees.find(x=>x.id===selectedId);if(!t) return;
+  t.profilePhoto=photoId;
+  saveData();renderSheet(t);renderMarkers();
+  showToast('⭐ Foto profilo impostata');
+};
+
+// ═══ DELETE TREE ═══
+window.confirmDeleteTree=function(){
+  const t=trees.find(x=>x.id===selectedId);if(!t) return;
+  const existing=document.getElementById('deleteConfirm');
+  if(existing){existing.remove();return;}
+  const sheet=document.getElementById('sheet');
+  const div=document.createElement('div');
+  div.id='deleteConfirm';
+  div.style.cssText='padding:16px 20px;background:#fff0f0;border-top:2px solid var(--accent);';
+  div.innerHTML='<p style="font-size:14px;color:var(--accent);font-weight:600;margin-bottom:10px;">Eliminare #'+t.num+' '+t.common+'?</p>'+
+    '<p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Tutti i dati, interventi e foto verranno cancellati.</p>'+
+    '<div style="display:flex;gap:10px;">'+
+    '<button onclick="document.getElementById(\'deleteConfirm\').remove()" style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);font-weight:600;cursor:pointer;font-family:var(--font);">Annulla</button>'+
+    '<button onclick="doDeleteTree()" style="flex:1;padding:10px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-weight:600;cursor:pointer;font-family:var(--font);">Elimina</button></div>';
+  sheet.appendChild(div);
+  div.scrollIntoView({behavior:'smooth'});
+};
+window.doDeleteTree=function(){
+  const t=trees.find(x=>x.id===selectedId);if(!t) return;
+  const name='#'+t.num+' '+t.common;
+  trees=trees.filter(x=>x.id!==selectedId);
+  saveData();closeSheet();renderMarkers();
+  showToast('🗑️ '+name+' eliminato');
+};
+
+
+// ═══ STORIA ═══
+function renderStoria(t){
+  const sc=document.getElementById('storiaContent');
+  const viv=t.vivaio||{};
+  sc.style.display='block';
+  document.getElementById('storiaToggle').textContent='\u25BC Storia';
+
+  // Header
+  let header='<div class="storia-header">';
+  header+='<strong>#'+t.num+' '+t.common+'</strong> &mdash; '+t.species+'<br>';
+  if(t.planted) header+='Messa a dimora: <strong>'+formatDate(t.planted)+'</strong><br>';
+  if(viv.data_semina) header+='Data semina: <strong>'+formatDate(viv.data_semina)+'</strong><br>';
+  header+='Travasi: <strong>'+(viv.num_travasi||0)+'</strong>';
+  if(viv.note_semina) header+='<br>Note: '+viv.note_semina;
+  if(viv.provenienza_seme) header+='<br>Provenienza seme: '+viv.provenienza_seme;
+  header+='</div>';
+
+  // Tutti gli interventi in ordine cronologico
+  const tutti=(t.interventions||[]).slice().sort(function(a,b){return b.date.localeCompare(a.date);});
+  let cats='';
+  if(tutti.length===0){
+    cats='<div class="empty-msg">Nessun intervento registrato</div>';
+  } else {
+    cats='<div class="storia-cat"><div class="storia-cat-title">\uD83D\uDCCB Tutti gli interventi ('+tutti.length+')</div>';
+    tutti.forEach(function(i){
+      const icon=INTERV_ICONS[i.type]||'\uD83D\uDCCB';
+      let det='',label=i.type;
+      if(i.type==='cambio_stato'&&i.details){
+        det=' \u2014 '+i.details.da+' \u2192 '+i.details.a;
+        label='Cambio stato';
+      } else if(i.type==='modifica'&&i.details){
+        det=' \u2014 '+i.details.campo+': '+i.details.da+' \u2192 '+i.details.a;
+        label='Modifica';
+      } else if(i.details&&i.details.volume_litri){
+        det=' \u2014 '+i.details.volume_litri+'L';
+      }
+      const nota=(i.note&&i.note!=='(necessit\u00e0 completata)'&&i.note.indexOf('(voce')<0)?
+        ' \u2014 '+i.note:'';
+      cats+='<div class="storia-entry"><span>'+icon+' '+formatDate(i.date)+
+        ' <em style="color:var(--muted);font-size:11px;">'+label+'</em>'+det+nota+'</span>'+
+        '<button class="storia-del" onclick="delInterv(\''+t.id+'\',\''+i.id+'\')" title="Elimina">\u2715</button></div>';
+    });
+    cats+='</div>';
+  }
+
+  sc.innerHTML=header+cats;
+}
+
+document.getElementById('storiaToggle').onclick=function(){
+  const c=document.getElementById('storiaContent');
+  if(c.style.display==='none'){c.style.display='block';this.textContent='\u25BC Storia';}
+  else{c.style.display='none';this.textContent='\u25B6 Storia';}
+};
+
+// ═══ TOGGLES ═══
+document.getElementById('qvToggle').onclick=function(){const c=document.getElementById('qvContent');
+  if(c.style.display==='none'){c.style.display='block';this.textContent='\u25BC Qualiviva';}
+  else{c.style.display='none';this.textContent='\u25B6 Qualiviva';}};
+document.getElementById('vivaioToggle').onclick=function(){const c=document.getElementById('vivaioContent');
+  if(c.style.display==='none'){c.style.display='block';this.textContent='\u25BC Vivaio';}
+  else{c.style.display='none';this.textContent='\u25B6 Vivaio';}};
+
+// ═══ UTILS ═══
+// ═══ UNDO SYSTEM ═══
+let undoStack=[];
+const MAX_UNDO=50;
+
+function updateUndoBtn(){
+  const btn=document.getElementById('btnUndo');
+  if(!btn) return;
+  btn.style.display=undoStack.length?'flex':'none';
+  if(undoStack.length){
+    const last=undoStack[undoStack.length-1];
+    btn.textContent='↩ '+( last.label||'Annulla');
+  }
+}
+
+function pushUndo(action){
+  undoStack.push(action);
+  if(undoStack.length>MAX_UNDO) undoStack.shift();
+  updateUndoBtn();
+}
+
+window.doUndo=function(){
+  if(!undoStack.length) return;
+  const action=undoStack.pop();
+  if(action.type==='interventions'){
+    const t=trees.find(x=>x.id===action.treeId);
+    if(t) t.interventions=t.interventions.filter(i=>!action.ids.includes(i.id));
+  } else if(action.type==='need'){
+    const t=trees.find(x=>x.id===action.treeId);
+    if(t&&t.needs) t.needs[action.key]=action.prev;
+  } else if(action.type==='bulk'){
+    action.items.forEach(function(item){
+      const t=trees.find(x=>x.id===item.treeId);
+      if(t) t.interventions=t.interventions.filter(i=>i.id!==item.id);
+    });
+  }
+  saveData();renderMarkers();
+  const sel=selectedId?trees.find(x=>x.id===selectedId):null;
+  if(sel) renderSheet(sel);
+  updateUndoBtn();
+  showToast('↩️ '+(action.label||'Azione')+' annullata');
+};
+
+function showToast(msg,undoAction){
+  const el=document.getElementById('toast');
+  const msgEl=document.getElementById('toastMsg');
+  msgEl.textContent=msg;
+  const oldBtn=el.querySelector('.toast-undo');
+  if(oldBtn) oldBtn.remove();
+  if(undoAction) pushUndo(undoAction);
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>el.classList.remove('show'),2800);
+}
+document.getElementById('sheetOverlay').onclick=closeSheet;
+
+
+// ═══ SETTINGS & BACKUP ═══
+window.openSettings=function(){
+  const p=document.getElementById('settingsPanel');
+  p.style.display='block';
+  const s=document.getElementById('statsPanel');
+  const vivCount=trees.filter(t=>t.in_vivaio).length;
+  const mapCount=trees.filter(t=>!t.in_vivaio).length;
+  const intervCount=trees.reduce(function(acc,t){return acc+(t.interventions||[]).length;},0);
+  const photoCount=trees.reduce(function(acc,t){return acc+(t.photos||[]).length;},0);
+  s.innerHTML='🌳 Alberi a dimora: <strong>'+mapCount+'</strong><br>'+
+    '🌱 In vivaio: <strong>'+vivCount+'</strong><br>'+
+    '📍 Zone: <strong>'+zones.length+'</strong><br>'+
+    '📋 Interventi totali: <strong>'+intervCount+'</strong><br>'+
+    '📷 Foto: <strong>'+photoCount+'</strong>';
+};
+
+window.exportData=function(){
+  const data={trees:trees,zones:zones,exported:new Date().toISOString(),version:'v8'};
+  const json=JSON.stringify(data,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='alberi_backup_'+new Date().toISOString().split('T')[0]+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ Backup esportato');
+};
+
+window.importData=function(input){
+  const file=input.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.trees||!Array.isArray(data.trees)){
+        document.getElementById('importStatus').textContent='⚠️ File non valido';
+        return;
+      }
+      trees=data.trees;
+      zones=data.zones||[];
+      saveData();renderMarkers();renderZoneSelectors();
+      document.getElementById('importStatus').textContent=
+        '✅ Importati '+trees.length+' alberi e '+zones.length+' zone';
+      window.openSettings();
+      showToast('✅ Dati importati: '+trees.length+' alberi');
+    }catch(err){
+      document.getElementById('importStatus').textContent='⚠️ Errore: '+err.message;
+    }
+  };
+  reader.readAsText(file);
+  input.value='';
+};
+
+window.resetAllData=function(){
+  if(!confirm('Cancellare TUTTI i dati? Questa azione non può essere annullata.')) return;
+  trees=[];zones=[];saveData();renderMarkers();renderZoneSelectors();
+  document.getElementById('settingsPanel').style.display='none';
+  showToast('🗑️ Tutti i dati cancellati');
+};
+
+// ═══ INIT ═══
+loadData();initMap();
+
+})();
+</script>
+
+<input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handleSheetPhoto(this)">
+
+<div id="settingsPanel" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:2000;background:var(--surface);overflow-y:auto;padding:20px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <h2 style="font-family:var(--display);font-size:22px;color:var(--primary);">⚙️ Impostazioni</h2>
+    <button onclick="document.getElementById('settingsPanel').style.display='none'" style="padding:6px 16px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);font-family:var(--font);cursor:pointer;">← Chiudi</button>
+  </div>
+
+  <div style="background:var(--bg);border-radius:var(--radius);padding:16px;margin-bottom:16px;">
+    <div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;">💾 Backup dati</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Esporta tutti gli alberi e le zone in un file JSON. Importalo per ripristinare i dati su un nuovo dispositivo o dopo aver pulito il browser.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button onclick="exportData()" style="flex:1;padding:12px;border:none;border-radius:10px;background:var(--primary);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);">⬇️ Esporta JSON</button>
+      <label style="flex:1;padding:12px;border:1.5px solid var(--primary);border-radius:10px;background:var(--primary-light);color:var(--primary);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);text-align:center;">
+        ⬆️ Importa JSON
+        <input type="file" accept=".json" onchange="importData(this)" style="display:none">
+      </label>
+    </div>
+    <div id="importStatus" style="margin-top:10px;font-size:13px;color:var(--muted);"></div>
+  </div>
+
+  <div style="background:var(--bg);border-radius:var(--radius);padding:16px;margin-bottom:16px;">
+    <div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">📊 Riepilogo</div>
+    <div id="statsPanel" style="font-size:14px;line-height:2;"></div>
+  </div>
+
+  <div style="background:#fff0f0;border-radius:var(--radius);padding:16px;">
+    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">⚠️ Zona pericolosa</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Cancella tutti i dati. Impossibile annullare.</p>
+    <button onclick="resetAllData()" style="width:100%;padding:12px;border:1.5px solid var(--accent);border-radius:10px;background:var(--accent-light);color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);">🗑️ Cancella tutti i dati</button>
+  </div>
+</div>
+</body>
+</html>
